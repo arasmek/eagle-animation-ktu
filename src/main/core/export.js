@@ -6,9 +6,9 @@ import { rimraf } from 'rimraf';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getFFmpegArgs, parseFFmpegLogs } from '../../common/ffmpeg';
+import { createEndingFrame } from './endingFrame';
 import { ffmpeg } from './ffmpeg';
 import { getProjectData } from './projects';
-import { createEndingFrame } from './endingFrame';
 
 export const exportSaveTemporaryBuffer = async (projectPath, bufferId, buffer) => {
   const directoryPath = join(projectPath, `/.tmp/`);
@@ -30,7 +30,7 @@ export const exportProjectScene = async (projectPath, scene, frames, filePath, f
   if (opts.add_ending_text && opts.ending_text) {
     const width = frames[0]?.width || 1920;
     const height = frames[0]?.height || 1080;
-    const endingFrameCount = Math.round(fps * 2); // 2 seconds
+    const endingFrameCount = Math.round(fps * 1); // 1 second
     const endingBuffer = await createEndingFrame({
       text: opts.ending_text,
       width,
