@@ -57,7 +57,7 @@ const WelcomeView = ({ t }) => {
           <Button onClick={handleBegin} style={{ marginTop: '8px' }} icon={Camera} />
           <div style={{ marginTop: '32px', fontSize: '0.9rem', color: '#888' }}>
             <Link to="/home" style={{ textDecoration: 'underline', color: '#888' }}>
-              {t ? t('Open classic Home (for testing)') : 'Open classic Home (for testing)'}
+              {t ? t('Old home') : 'Old home'}
             </Link>
           </div>
         </div>

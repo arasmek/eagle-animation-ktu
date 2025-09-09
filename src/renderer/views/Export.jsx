@@ -210,7 +210,7 @@ const Export = ({ t }) => {
             translations: {
               EXPORT_FRAMES: t('Export animation frames'),
               EXPORT_VIDEO: t('Export as video'),
-              DEFAULT_FILE_NAME: t('video'),
+              DEFAULT_FILE_NAME: project?.title || t('video'),
               EXT_NAME: t('Video file'),
             },
             compress_as_zip: data.mode === 'frames' ? data.compressAsZip && appCapabilities.includes('EXPORT_FRAMES_ZIP') : false,
@@ -261,7 +261,7 @@ const Export = ({ t }) => {
       public_code: data.mode === 'send' ? newCode : undefined,
       compress_as_zip: data.mode === 'frames' ? data.compressAsZip && appCapabilities.includes('EXPORT_FRAMES_ZIP') : false,
       add_ending_text: data.addEndingText,
-      ending_text: project?.title ? `Filmą sukūrė ${project.title}` : '',
+      ending_text: project?.title ? `Filmą sukūrė: ${project.title}` : '',
     });
 
     setIsExporting(false);
@@ -297,8 +297,7 @@ const Export = ({ t }) => {
                     </FormGroup>
                     {watch('mode') === 'video' && (
                       <FormGroup label={t('Add ending text')}
-                        description={t('Appends "Created by ..." at the end of the video.')}
-                      >
+                        description={t('Shows name of the project at the end of the video.')}>
                         <Switch register={register('addEndingText')} />
                       </FormGroup>
                     )}
