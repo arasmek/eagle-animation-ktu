@@ -5,6 +5,7 @@ import ExportView from '@views/Export';
 import HomeView from '@views/Home';
 import SettingsView from '@views/Settings';
 import ShortcutsView from '@views/Shortcuts';
+import WelcomeView from '@views/Welcome';
 import { MemoryRouter as Router, Route, Routes } from 'react-router-dom';
 
 import { WindowProvider } from './contexts/WindowContext';
@@ -15,7 +16,8 @@ const App = () => (
       <Router>
         <WindowProvider>
           <Routes>
-            <Route exact path="/" element={<HomeView />} />
+            <Route exact path="/" element={<WelcomeView />} />
+            <Route exact path="/home" element={<HomeView />} />
             <Route exact path="/settings" element={<SettingsView />} />
             <Route exact path="/shortcuts" element={<ShortcutsView />} />
             <Route exact path="/animator/:id/:track" element={<AnimatorView />} />

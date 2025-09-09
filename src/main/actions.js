@@ -211,6 +211,8 @@ const actions = {
       public_code = 'default',
       event_key = '',
       framerate = 10,
+      add_ending_text,
+      ending_text,
     },
     sendToRenderer
   ) => {
@@ -242,6 +244,8 @@ const actions = {
         customOutputFramerate: custom_output_framerate,
         customOutputFramerateNumber: custom_output_framerate_number,
         framerate: Number(framerate),
+        add_ending_text,
+        ending_text,
       },
       (progress) => sendToRenderer('FFMPEG_PROGRESS', { progress })
     );

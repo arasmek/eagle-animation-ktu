@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getFFmpegArgs, parseFFmpegLogs } from '../../common/ffmpeg';
 import { ffmpeg } from './ffmpeg';
 import { getProjectData } from './projects';
+import { createEndingFrame } from './endingFrame';
 
 export const exportSaveTemporaryBuffer = async (projectPath, bufferId, buffer) => {
   const directoryPath = join(projectPath, `/.tmp/`);
@@ -25,6 +26,26 @@ export const exportProjectScene = async (projectPath, scene, frames, filePath, f
   }
 
   const fps = opts?.framerate || project.project.scenes[scene].framerate;
+  // If ending text is requested, generate and add ending frame(s)
+  if (opts.add_ending_text && opts.ending_text) {
+    const width = frames[0]?.width || 1920;
+    const height = frames[0]?.height || 1080;
+    const endingFrameCount = Math.round(fps * 2); // 2 seconds
+    const endingBuffer = await createEndingFrame({
+      text: opts.ending_text,
+      width,
+      height,
+      font: 'bold 48px Open Sans',
+      color: '#fff',
+      bgColor: '#222',
+    });
+    console.log(`[DEBUG] Generating ${endingFrameCount} ending frames at ${width}x${height}`);
+    for (let i = 0; i < endingFrameCount; i++) {
+      const endingFramePath = join(directoryPath, `frame-${(frames.length + i).toString().padStart(6, '0')}.jpg`);
+      await writeFile(endingFramePath, endingBuffer);
+      console.log(`[DEBUG] Ending frame written: ${endingFramePath}`);
+    }
+  }
   const args = getFFmpegArgs(format, filePath, fps, opts);
 
   const handleData = (data) => {

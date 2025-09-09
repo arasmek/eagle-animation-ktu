@@ -64,6 +64,7 @@ const Export = ({ t }) => {
       customOutputFramerateNumber: 60,
       matchAspectRatio: true,
       compressAsZip: false,
+      addEndingText: false,
     },
   });
 
@@ -259,6 +260,8 @@ const Export = ({ t }) => {
       event_key: settings.EVENT_KEY,
       public_code: data.mode === 'send' ? newCode : undefined,
       compress_as_zip: data.mode === 'frames' ? data.compressAsZip && appCapabilities.includes('EXPORT_FRAMES_ZIP') : false,
+      add_ending_text: data.addEndingText,
+      ending_text: project?.title ? `Filmą sukūrė ${project.title}` : '',
     });
 
     setIsExporting(false);
@@ -288,9 +291,18 @@ const Export = ({ t }) => {
                 </div>
 
                 {['video', 'send'].includes(watch('mode')) && (
-                  <FormGroup label={t('Video format')} description={t('The exported video format')}>
-                    <Select control={control} options={formats} register={register('format')} />
-                  </FormGroup>
+                  <>
+                    <FormGroup label={t('Video format')} description={t('The exported video format')}>
+                      <Select control={control} options={formats} register={register('format')} />
+                    </FormGroup>
+                    {watch('mode') === 'video' && (
+                      <FormGroup label={t('Add ending text')}
+                        description={t('Appends "Created by ..." at the end of the video.')}
+                      >
+                        <Switch register={register('addEndingText')} />
+                      </FormGroup>
+                    )}
+                  </>
                 )}
 
                 {watch('mode') === 'frames' && (
