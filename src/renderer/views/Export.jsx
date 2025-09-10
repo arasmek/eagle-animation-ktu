@@ -65,6 +65,7 @@ const Export = ({ t }) => {
       matchAspectRatio: true,
       compressAsZip: false,
       addEndingText: false,
+      uploadToDrive: false,
     },
   });
 
@@ -262,6 +263,7 @@ const Export = ({ t }) => {
       compress_as_zip: data.mode === 'frames' ? data.compressAsZip && appCapabilities.includes('EXPORT_FRAMES_ZIP') : false,
       add_ending_text: data.addEndingText,
       ending_text: project?.title ? `Filmą sukūrė: ${project.title}` : '',
+    uploadToDrive: data.uploadToDrive,
     });
 
     setIsExporting(false);
@@ -297,10 +299,15 @@ const Export = ({ t }) => {
                     </FormGroup>
                     {watch('mode') === 'video' && (
                       <FormGroup label={t('Add ending text')}
-                        description={t('Shows name of the project at the end of the video.')}>
+                        description={t('Shows name of the project at the end of the video.')}> 
                         <Switch register={register('addEndingText')} />
                       </FormGroup>
                     )}
+                    <FormGroup label={t('Upload to Google Drive')}
+                      description={t('Automatically upload the exported video to your Google Drive.')}
+                    >
+                      <Switch register={register('uploadToDrive')} />
+                    </FormGroup>
                   </>
                 )}
 

@@ -33,3 +33,7 @@ debug.log
 .env.test.local
 .env.production.local
 
+#tokens and credentials
+generate_drive_token.js
+client_secret_*.json
+token.json

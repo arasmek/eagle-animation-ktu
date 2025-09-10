@@ -213,6 +213,7 @@ const actions = {
       framerate = 10,
       add_ending_text,
       ending_text,
+      uploadToDrive,
     },
     sendToRenderer
   ) => {
@@ -246,6 +247,7 @@ const actions = {
         framerate: Number(framerate),
         add_ending_text,
         ending_text,
+        uploadToDrive,
       },
       (progress) => sendToRenderer('FFMPEG_PROGRESS', { progress })
     );

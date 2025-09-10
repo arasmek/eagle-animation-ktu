@@ -6,6 +6,7 @@ import { rimraf } from 'rimraf';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getFFmpegArgs, parseFFmpegLogs } from '../../common/ffmpeg';
+import { uploadToDrive } from './driveUpload';
 import { createEndingFrame } from './endingFrame';
 import { ffmpeg } from './ffmpeg';
 import { getProjectData } from './projects';
@@ -18,6 +19,7 @@ export const exportSaveTemporaryBuffer = async (projectPath, bufferId, buffer) =
 
 export const exportProjectScene = async (projectPath, scene, frames, filePath, format, opts = {}, onProgress = () => {}) => {
   const project = await getProjectData(projectPath);
+  console.log('[EXPORT] Starting exportProjectScene', { filePath, opts });
   const directoryPath = join(projectPath, `/.tmp-${uuidv4()}/`);
   const bufferDirectoryPath = join(projectPath, `/.tmp/`);
   await mkdirp(directoryPath);
@@ -54,6 +56,23 @@ export const exportProjectScene = async (projectPath, scene, frames, filePath, f
   await ffmpeg(args, directoryPath, handleData);
   await rimraf(directoryPath);
   await rimraf(bufferDirectoryPath);
+
+  console.log('[EXPORT] opts.uploadToDrive:', opts.uploadToDrive);
+  // Upload to Google Drive if requested
+  if (opts.uploadToDrive) {
+    const fs = require('fs');
+    console.log(`[DRIVE] Checking file for upload: ${filePath}`);
+    if (fs.existsSync(filePath)) {
+      try {
+        const driveLink = await uploadToDrive(filePath, project.project.title || 'video.mp4', '1ooxjndQh5gNYZFDm5eRKzy4VTwb9VCOc');
+        console.log(`[DRIVE] Uploaded to Google Drive: ${driveLink}`);
+      } catch (err) {
+        console.error('[DRIVE] Upload failed:', err);
+      }
+    } else {
+      console.error(`[DRIVE] Exported video file does not exist: ${filePath}`);
+    }
+  }
 };
 
 // Sync list
