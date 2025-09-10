@@ -57,17 +57,24 @@ export const exportProjectScene = async (projectPath, scene, frames, filePath, f
   await rimraf(directoryPath);
   await rimraf(bufferDirectoryPath);
 
-  console.log('[EXPORT] opts.uploadToDrive:', opts.uploadToDrive);
-  // Upload to Google Drive if requested
+  console.log('[EXPORT] opts:', { uploadToDrive: opts.uploadToDrive, userEmail: opts.userEmail });
+  // Upload to Google Drive if requested, then send email if userEmail is provided
   if (opts.uploadToDrive) {
+    console.log('[EXPORT] Entered uploadToDrive block');
     const fs = require('fs');
     console.log(`[DRIVE] Checking file for upload: ${filePath}`);
     if (fs.existsSync(filePath)) {
+      console.log('[DRIVE] File exists, starting upload');
       try {
         const driveLink = await uploadToDrive(filePath, project.project.title || 'video.mp4', '1ooxjndQh5gNYZFDm5eRKzy4VTwb9VCOc');
         console.log(`[DRIVE] Uploaded to Google Drive: ${driveLink}`);
+        if (driveLink && opts.userEmail) {
+          console.log('[DRIVE] About to send email:', opts.userEmail, driveLink);
+          const { sendExportEmail } = require('./core/emailSender');
+          await sendExportEmail({ to: opts.userEmail, link: driveLink });
+        }
       } catch (err) {
-        console.error('[DRIVE] Upload failed:', err);
+        console.error('[DRIVE/EMAIL] Upload or email failed:', err);
       }
     } else {
       console.error(`[DRIVE] Exported video file does not exist: ${filePath}`);

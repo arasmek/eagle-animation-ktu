@@ -14,7 +14,17 @@ export default defineConfig({
       },
       sourcemap: true,
     },
-    plugins: [externalizeDepsPlugin()],
+    plugins: [
+      externalizeDepsPlugin(),
+      viteStaticCopy({
+        targets: [
+          {
+            src: normalizePath(resolve(__dirname, 'src/main/core/emailSender.js')),
+            dest: 'core',
+          },
+        ],
+      }),
+    ],
   },
   preload: {
     build: {

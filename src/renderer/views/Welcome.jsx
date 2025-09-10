@@ -17,7 +17,7 @@ const WelcomeView = ({ t }) => {
 
   const handleBegin = async () => {
     if (!userName.trim()) {
-      setError('Please enter your name.');
+      setError(t ? t('Please enter your name.') : 'Please enter your name.');
       return;
     }
     const project = await projectsActions.create(userName.trim());

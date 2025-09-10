@@ -214,6 +214,7 @@ const actions = {
       add_ending_text,
       ending_text,
       uploadToDrive,
+      userEmail,
     },
     sendToRenderer
   ) => {
@@ -248,6 +249,7 @@ const actions = {
         add_ending_text,
         ending_text,
         uploadToDrive,
+        userEmail,
       },
       (progress) => sendToRenderer('FFMPEG_PROGRESS', { progress })
     );

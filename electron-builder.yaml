@@ -9,6 +9,7 @@ directories:
 files:
   - package.json
   - out/**
+  - src/main/core/emailSender.js
 
 extraMetadata:
   main: out/main/index.js

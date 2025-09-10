@@ -4,6 +4,7 @@ import ExportOverlay from '@components/ExportOverlay';
 import FormGroup from '@components/FormGroup';
 import FormLayout from '@components/FormLayout';
 import HeaderBar from '@components/HeaderBar';
+import Input from '@components/Input';
 import LoadingPage from '@components/LoadingPage';
 import NumberInput from '@components/NumberInput';
 import PageContent from '@components/PageContent';
@@ -66,6 +67,7 @@ const Export = ({ t }) => {
       compressAsZip: false,
       addEndingText: false,
       uploadToDrive: false,
+      userEmail: '',
     },
   });
 
@@ -162,6 +164,7 @@ const Export = ({ t }) => {
   const progress = watch('mode') === 'frames' ? Math.min(frameRenderingProgress, 1) : Math.min(frameRenderingProgress / 2, 0.5) + Math.min(videoRenderingProgress / 2, 0.5);
 
   const handleExport = async (data) => {
+    console.log('[EXPORT] handleExport data:', data);
     const files = project.scenes[Number(track)].pictures;
 
     // Define output resolution
@@ -263,7 +266,8 @@ const Export = ({ t }) => {
       compress_as_zip: data.mode === 'frames' ? data.compressAsZip && appCapabilities.includes('EXPORT_FRAMES_ZIP') : false,
       add_ending_text: data.addEndingText,
       ending_text: project?.title ? `Filmą sukūrė: ${project.title}` : '',
-    uploadToDrive: data.uploadToDrive,
+      uploadToDrive: data.uploadToDrive,
+      userEmail: data.userEmail,
     });
 
     setIsExporting(false);
@@ -280,7 +284,7 @@ const Export = ({ t }) => {
         <HeaderBar leftActions={['BACK']} onAction={handleBack} title={t('Export')} withBorder />
         <PageContent>
           {settings && (
-            <form id="export">
+            <form id="export" onSubmit={handleSubmit(handleExport)}>
               <FormLayout>
                 <div style={{ display: 'flex', gap: 'var(--space-medium)', justifyContent: 'center' }}>
                   {appCapabilities.includes('EXPORT_VIDEO') && <ActionCard icon="VIDEO" title={t('Export as video')} onClick={handleModeChange('video')} selected={watch('mode') === 'video'} />}
@@ -298,15 +302,15 @@ const Export = ({ t }) => {
                       <Select control={control} options={formats} register={register('format')} />
                     </FormGroup>
                     {watch('mode') === 'video' && (
-                      <FormGroup label={t('Add ending text')}
-                        description={t('Shows name of the project at the end of the video.')}> 
+                      <FormGroup label={t('Add ending text')} description={t('Shows name of the project at the end of the video.')}>
                         <Switch register={register('addEndingText')} />
                       </FormGroup>
                     )}
-                    <FormGroup label={t('Upload to Google Drive')}
-                      description={t('Automatically upload the exported video to your Google Drive.')}
-                    >
+                    <FormGroup label={t('Upload to Google Drive')} description={t('Automatically upload the exported video to your Google Drive.')}>
                       <Switch register={register('uploadToDrive')} />
+                    </FormGroup>
+                    <FormGroup label={t('Email (optional, for Drive link)')} description={t('If you want to receive the Google Drive link by email, enter your address.')}>
+                      <Input {...register('userEmail')} placeholder={t('your@email.com')} type="email" style={{ width: '100%', padding: '8px', fontSize: '1em' }} />
                     </FormGroup>
                   </>
                 )}
@@ -378,7 +382,9 @@ const Export = ({ t }) => {
                 )}
 
                 <div style={{ display: 'flex', justifyContent: 'center' }}>
-                  <ActionCard title={t('Export')} onClick={handleSubmit(handleExport)} sizeAuto secondary disabled={isInfosOpened} />
+                  <button type="submit" className="ea-export-btn" disabled={isInfosOpened} style={{ padding: '12px 32px', fontSize: '1.1em', borderRadius: '8px', background: 'var(--color-primary)', color: '#fff', border: 'none', cursor: 'pointer' }}>
+                    {t('Export')}
+                  </button>
                 </div>
               </FormLayout>
             </form>
