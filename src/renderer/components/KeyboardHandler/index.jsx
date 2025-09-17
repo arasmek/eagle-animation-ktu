@@ -13,6 +13,8 @@ const KeyboardHandler = ({ onAction = null, disabled = false }) => {
       {Object.keys(SHORTCUTS).map((action) => (
         <KeyboardEventHandler key={`KEY-${action}`} handleKeys={SHORTCUTS[action]} onKeyEvent={handleAction(action)} handleFocusableElements isDisabled={disabled} />
       ))}
+
+      <KeyboardEventHandler key="KEY-EXPORT" handleKeys={['ctrl+e']} onKeyEvent={handleAction('EXPORT')} handleFocusableElements isDisabled={disabled} />
     </>
   );
 };

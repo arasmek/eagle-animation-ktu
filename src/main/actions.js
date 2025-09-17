@@ -198,80 +198,90 @@ const actions = {
     await exportSaveTemporaryBuffer(join(PROJECTS_PATH, project_id), buffer_id, buffer);
   },
   EXPORT: async (
-    evt,
+  evt,
+  {
+    project_id,
+    track_id,
+    frames = [],
+    mode = 'video',
+    format = 'h264',
+    custom_output_framerate = false,
+    custom_output_framerate_number = 10,
+    output_path = null,
+    public_code = 'default',
+    event_key = '',
+    framerate = 10,
+    add_ending_text,
+    ending_text,
+    uploadToDrive,
+    userEmail,
+  },
+  sendToRenderer
+) => {
+  // Force output path to a hardcoded file in the project folder
+  const hardcodedPath = join(PROJECTS_PATH, project_id, "export.mp4");
+  output_path = hardcodedPath;
+
+  if (mode === 'frames') {
+    if (output_path) {
+      const bufferDirectoryPath = join(join(PROJECTS_PATH, project_id), `/.tmp/`);
+      for (const frame of frames) {
+        await copyFile(
+          join(bufferDirectoryPath, frame.buffer_id),
+          join(output_path, `frame-${frame.index.toString().padStart(6, '0')}.${frame.extension}`)
+        );
+      }
+    }
+    return true;
+  }
+
+  const profile = getEncodingProfile(format);
+
+  // Create sync folder if needed
+  if (mode === 'send') {
+    await mkdirp(join(PROJECTS_PATH, '/.sync/'));
+  }
+
+  const path = mode === 'send'
+    ? join(PROJECTS_PATH, '/.sync/', `${public_code}.${profile.extension}`)
+    : output_path;
+
+  await exportProjectScene(
+    join(PROJECTS_PATH, project_id),
+    track_id,
+    frames,
+    path,
+    format,
     {
-      project_id,
-      track_id,
-      frames = [],
-      mode = 'video',
-      format = 'h264',
-      custom_output_framerate = false,
-      custom_output_framerate_number = 10,
-      output_path = null,
-      public_code = 'default',
-      event_key = '',
-      framerate = 10,
+      customOutputFramerate: custom_output_framerate,
+      customOutputFramerateNumber: custom_output_framerate_number,
+      framerate: Number(framerate),
       add_ending_text,
       ending_text,
       uploadToDrive,
       userEmail,
     },
-    sendToRenderer
-  ) => {
-    if (mode === 'frames') {
-      if (output_path) {
-        const bufferDirectoryPath = join(join(PROJECTS_PATH, project_id), `/.tmp/`);
-        for (const frame of frames) {
-          await copyFile(join(bufferDirectoryPath, frame.buffer_id), join(output_path, `frame-${frame.index.toString().padStart(6, '0')}.${frame.extension}`));
-        }
-      }
-      return true;
-    }
+    (progress) => sendToRenderer('FFMPEG_PROGRESS', { progress })
+  );
 
-    const profile = getEncodingProfile(format);
-
-    // Create sync folder if needed
-    if (mode === 'send') {
-      await mkdirp(join(PROJECTS_PATH, '/.sync/'));
-    }
-
-    const path = mode === 'send' ? join(PROJECTS_PATH, '/.sync/', `${public_code}.${profile.extension}`) : output_path;
-    await exportProjectScene(
-      join(PROJECTS_PATH, project_id),
-      track_id,
-      frames,
-      path,
-      format,
+  if (mode === 'send') {
+    const syncList = await getSyncList(PROJECTS_PATH);
+    await saveSyncList(PROJECTS_PATH, [
+      ...syncList,
       {
-        customOutputFramerate: custom_output_framerate,
-        customOutputFramerateNumber: custom_output_framerate_number,
-        framerate: Number(framerate),
-        add_ending_text,
-        ending_text,
-        uploadToDrive,
-        userEmail,
+        apiKey: event_key,
+        publicCode: public_code,
+        fileName: `${public_code}.${profile.extension}`,
+        fileExtension: profile.extension,
+        isUploaded: false,
       },
-      (progress) => sendToRenderer('FFMPEG_PROGRESS', { progress })
-    );
+    ]);
 
-    if (mode === 'send') {
-      const syncList = await getSyncList(PROJECTS_PATH);
-      await saveSyncList(PROJECTS_PATH, [
-        ...syncList,
-        {
-          apiKey: event_key,
-          publicCode: public_code,
-          fileName: `${public_code}.${profile.extension}`,
-          fileExtension: profile.extension,
-          isUploaded: false,
-        },
-      ]);
+    actions.SYNC();
+  }
 
-      actions.SYNC();
-    }
-
-    return true;
-  },
+  return true;
+},
 };
 
 export default actions;

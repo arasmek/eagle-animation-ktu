@@ -5,7 +5,7 @@ import PageContent from '@components/PageContent';
 import PageLayout from '@components/PageLayout';
 import useProjects from '@hooks/useProjects';
 import Camera from '@icons/faCamera';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { withTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -14,6 +14,13 @@ const WelcomeView = ({ t }) => {
   const { actions: projectsActions } = useProjects();
   const navigate = useNavigate();
   const [error, setError] = useState('');
+  const nameInputRef = useRef(null);
+
+  useEffect(() => {
+    if (nameInputRef.current) {
+      nameInputRef.current.focus();
+    }
+  }, []);
 
   const handleBegin = async () => {
     if (!userName.trim()) {
@@ -25,6 +32,13 @@ const WelcomeView = ({ t }) => {
     window.track && window.track('project_created', { projectId: project.id });
   };
 
+  // Handle Enter key
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleBegin();
+    }
+  };
+
   return (
     <PageLayout>
       <HeaderBar withBorder>
@@ -32,14 +46,18 @@ const WelcomeView = ({ t }) => {
       </HeaderBar>
       <PageContent>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '70vh' }}>
-          <h2 style={{ color: 'var(--color-white)', fontWeight: 600, fontSize: '2rem', marginBottom: '24px' }}>{t ? t('Enter your name to begin') : 'Enter your name to begin'}</h2>
+          <h2 style={{ color: 'var(--color-white)', fontWeight: 600, fontSize: '2rem', marginBottom: '24px' }}>
+            {t ? t('Enter your name to begin') : 'Enter your name to begin'}
+          </h2>
           <input
+            ref={nameInputRef}
             type="text"
             value={userName}
             onChange={(e) => {
               setUserName(e.target.value);
               setError('');
             }}
+            onKeyDown={handleKeyDown} // <- listen for Enter
             placeholder={t ? t('Your name') : 'Your name'}
             style={{
               padding: '8px',

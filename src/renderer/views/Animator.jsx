@@ -488,7 +488,15 @@ const Animator = ({ t }) => {
           />
         </div>
       </PageLayout>
-      {!showCameraSettings && !showProjectSettings && <KeyboardHandler onAction={handleAction} disabled={disableKeyboardShortcuts} />}
+      {!showCameraSettings && !showProjectSettings && (
+  <KeyboardHandler
+    onAction={handleAction}
+    disabled={disableKeyboardShortcuts}
+    customKeys={{
+      'ctrl+e': () => handleAction('EXPORT'),
+    }}
+  />
+)}
       <Window isOpened={showCameraSettings} onClose={() => setShowCameraSettings(false)}>
         <CameraSettingsWindow
           cameraCapabilities={currentCameraCapabilities}
