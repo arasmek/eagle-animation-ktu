@@ -242,5 +242,8 @@
   "Enter your name to begin": "Įvesk vardą pradėjimui",
   "Please enter your name": "Įveskite vardą",
   "Add ending text": "Pridėti autoriaus vardą",
-  "Shows name of the project at the end of the video.": "Rodo projekto pavadinimą vaizo įrašo gale."
+  "Shows name of the project at the end of the video.": "Rodo projekto pavadinimą vaizo įrašo gale.",
+  "Back to Welcome": "Grįžti į pradžią",
+  "Email": "El. paštas (nebūtina)",
+  "If you want to receive the Google Drive link by email, enter your address.": "Jei norite gauti Google Drive nuorodą el. paštu, įveskite savo adresą."
 }

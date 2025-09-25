@@ -60,7 +60,27 @@ const ExportOverlay = ({ t, publicCode = null, onCancel = null, isExporting = fa
         </div>
       )}
       {isExporting && <div className={style.info}>{t('Export will take a while, please be patient')}</div>}
-      {!isExporting && <div className={style.info}>{t('The export is finished, you can close this page')}</div>}
+      {!isExporting && (
+        <div className={`${style.doneContainer} ${!publicCode && style.containerCenter}`}>
+          {publicCode && <ActionCard onClick={handleCreateProject} title={t('Create new project')} sizeAuto />}
+          <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+            <button
+              onClick={() => navigate('/')}
+              style={{
+                padding: '12px 24px',
+                fontSize: '1em',
+                borderRadius: '6px',
+                background: 'var(--color-primary)',
+                color: '#fff',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              {t('Back to Welcome')}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

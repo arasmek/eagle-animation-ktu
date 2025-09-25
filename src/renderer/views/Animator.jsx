@@ -354,6 +354,10 @@ const Animator = ({ t }) => {
     EXPORT: () => {
       navigate(`/export/${id}/${track}?back=/animator/${id}/${track}`);
     },
+    // CUSTOM EXPORT
+    CUSTOM_EXPORT: () => {
+      navigate(`/custom-export/${id}/${track}?back=/animator/${id}/${track}`);
+    },
     HIDE_FRAME: async () => {
       projectActions.applyHiddenFrameStatus(track, currentFrameId, !currentFrame?.hidden);
       window.track('frame_hidden', { projectId: `${id}`, trackId: `${track}`, frameId: `${currentFrameId}`, hidden: !currentFrame?.hidden });
@@ -422,7 +426,9 @@ const Animator = ({ t }) => {
         <HeaderBar
           leftActions={['BACK']}
           rightActions={[
-            ...(pictures?.length > 0 && (appCapabilities.includes('EXPORT_VIDEO') || appCapabilities.includes('EXPORT_FRAMES') || appCapabilities.includes('BACKGROUND_SYNC')) ? ['EXPORT'] : []),
+            ...(pictures?.length > 0 && (appCapabilities.includes('EXPORT_VIDEO') || appCapabilities.includes('EXPORT_FRAMES') || appCapabilities.includes('BACKGROUND_SYNC'))
+              ? ['EXPORT', 'CUSTOM_EXPORT']
+              : []),
             'SETTINGS',
           ]}
           onAction={handleAction}
@@ -489,14 +495,15 @@ const Animator = ({ t }) => {
         </div>
       </PageLayout>
       {!showCameraSettings && !showProjectSettings && (
-  <KeyboardHandler
-    onAction={handleAction}
-    disabled={disableKeyboardShortcuts}
-    customKeys={{
-      'ctrl+e': () => handleAction('EXPORT'),
-    }}
-  />
-)}
+        <KeyboardHandler
+          onAction={handleAction}
+          disabled={disableKeyboardShortcuts}
+          customKeys={{
+            'ctrl+e': () => handleAction('EXPORT'),
+            'ctrl+`': () => handleAction('CUSTOM_EXPORT'),
+          }}
+        />
+      )}
       <Window isOpened={showCameraSettings} onClose={() => setShowCameraSettings(false)}>
         <CameraSettingsWindow
           cameraCapabilities={currentCameraCapabilities}

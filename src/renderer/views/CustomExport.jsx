@@ -150,16 +150,8 @@ const CustomExport = ({ t }) => {
   };
 
   if (!project || !settings || !bestResolution) {
-    return (
-      <>
-        <LoadingPage show={true} />
-        <PageLayout>
-          <HeaderBar leftActions={['BACK']} onAction={handleBack} title={t('Export')} withBorder />
-          <PageContent></PageContent>
-        </PageLayout>
-      </>
-    );
-  }
+  return <div style={{ color: 'red' }}>DEBUG: project={!!project}, settings={!!settings}, bestResolution={!!bestResolution}</div>;
+}
 
   const progress = watch('mode') === 'frames' ? Math.min(frameRenderingProgress, 1) : Math.min(frameRenderingProgress / 2, 0.5) + Math.min(videoRenderingProgress / 2, 0.5);
 
@@ -205,27 +197,7 @@ const CustomExport = ({ t }) => {
     }
 
     // Ask user to define output path
-    const outputPath =
-      data.mode === 'send'
-        ? null
-        : await window.EA('EXPORT_SELECT_PATH', {
-            type: data.mode === 'video' ? 'FILE' : 'FOLDER',
-            format: data.format,
-            translations: {
-              EXPORT_FRAMES: t('Export animation frames'),
-              EXPORT_VIDEO: t('Export as video'),
-              DEFAULT_FILE_NAME: project?.title || t('video'),
-              EXT_NAME: t('Video file'),
-            },
-            compress_as_zip: data.mode === 'frames' ? data.compressAsZip && appCapabilities.includes('EXPORT_FRAMES_ZIP') : false,
-          });
-
-    // Cancel if result is null, (dialog closed)
-    if (data.mode !== 'send' && outputPath === null) {
-      setIsInfosOpened(false);
-      setIsExporting(false);
-      return;
-    }
+    const outputPath = null;
 
     const createBuffer = async (bufferId, buffer) => {
       await window.EA('EXPORT_BUFFER', {

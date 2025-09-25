@@ -1,6 +1,7 @@
 import Container from '@components/Container';
 import CustomErrorBoundary from '@components/CustomErrorBoundary';
 import AnimatorView from '@views/Animator';
+import CustomExportView from '@views/CustomExport';
 import ExportView from '@views/Export';
 import HomeView from '@views/Home';
 import SettingsView from '@views/Settings';
@@ -22,6 +23,7 @@ const App = () => (
             <Route exact path="/shortcuts" element={<ShortcutsView />} />
             <Route exact path="/animator/:id/:track" element={<AnimatorView />} />
             <Route exact path="/export/:id/:track" element={<ExportView />} />
+            <Route exact path="/custom-export/:id/:track" element={<CustomExportView />} />
             <Route path="*" element={null} />
           </Routes>
         </WindowProvider>
