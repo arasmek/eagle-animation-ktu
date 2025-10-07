@@ -9,7 +9,7 @@ dotenv.config();
 
 const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
 const TOKEN_PATH = path.join(process.cwd(), 'token.json');
-const CREDENTIALS_PATH = path.join(process.cwd(), 'client_secret_347038071657-9ctb3aaknq3pmlprnqcpvum3u443hpke.apps.googleusercontent.com.json');
+const CREDENTIALS_PATH = path.join(process.cwd(), 'credentials.json');
 
 function loadCredentials() {
   return JSON.parse(fs.readFileSync(CREDENTIALS_PATH, 'utf8'));

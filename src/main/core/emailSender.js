@@ -14,10 +14,10 @@ export async function sendExportEmail({ to, link }) {
   });
 
   const mailOptions = {
-    from: `"Audiovisual lab" <${process.env.SMTP_USER}>`,
+    from: `"Stop Motion KTU IF" <${process.env.SMTP_USER}>`,
     to,
     subject: 'STOP ANIMACIJA!',
-    html: `Jūsų sukurta animacija paruošta. Parsisiųskite ją į savo įrenginį.:\n${link}`,
+    html: `Jūsų sukurta animacija paruošta. Parsisiųskite ją į savo įrenginį.: \n${link}`,
   };
 
   try {

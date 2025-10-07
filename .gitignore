@@ -37,3 +37,4 @@ debug.log
 generate_drive_token.js
 client_secret_*.json
 token.json
+credentials.json
