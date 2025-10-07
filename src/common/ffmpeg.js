@@ -51,47 +51,65 @@ export const getFFmpegArgs = (encodingProfile = false, outputFile = false, fps =
     throw new Error('UNKNOWN_PROFILE');
   }
 
-  // Get profile
   const profile = profiles[encodingProfile];
+  if (!outputFile) throw new Error('UNDEFINED_OUTPUT');
 
-  // Invalid output file
-  if (outputFile === false) {
-    throw new Error('UNDEFINED_OUTPUT');
-  }
-
-  // Default -y to overwite
   const args = ['-y', '-stats_period', '0.1'];
 
-  // Input framerate
-  args.push('-r', `${Number(fps) > 0 && Number(fps) <= 240 ? Number(fps) : 12}`);
-
-  // Add all images in the path
+  // INPUT 0: image sequence — set input framerate with -framerate (not -r)
+  const inputFps = Number(fps) > 0 && Number(fps) <= 240 ? Number(fps) : 12;
+  args.push('-framerate', `${inputFps}`);
   args.push('-i', 'frame-%06d.jpg');
 
-  // Codec
+  // INPUT 1: optional background audio
+  const hasAudio = !!opts.backgroundSoundPath;
+  if (hasAudio) {
+    // Loop audio; final duration will be capped below to match video
+    args.push('-stream_loop', '-1', '-i', opts.backgroundSoundPath);
+  }
+
+  // Video codec + preset
   args.push('-c:v', profile.codec);
-
-  // Preset
-  if (profile.preset) {
-    args.push('-preset', profile.preset);
-  }
-
-  // Fast start for streaming
-  if (profile.extension === 'mp4') {
-    args.push('-movflags', '+faststart');
-  }
-
-  // Custom output framerate
-  if (opts.customOutputFramerate && opts.customOutputFramerateNumber) {
-    args.push('-r', `${Number(opts.customOutputFramerateNumber)}`);
-  }
+  if (profile.preset) args.push('-preset', profile.preset);
 
   // Pixel mode
   args.push('-pix_fmt', profile.pix_fmt);
 
-  // Prores flags
+  // MP4 faststart
+  if (profile.extension === 'mp4') {
+    args.push('-movflags', '+faststart');
+  }
+
+  // Custom output framerate (output side)
+  if (opts.customOutputFramerate && opts.customOutputFramerateNumber) {
+    args.push('-r', `${Number(opts.customOutputFramerateNumber)}`);
+  }
+
+  // ProRes specifics
   if (encodingProfile === 'prores') {
     args.push('-profile:v', '3', '-vendor', 'apl0', '-bits_per_mb', '4000', '-f', 'mov');
+  }
+
+  // If audio provided: duration, codec, mapping
+  if (hasAudio) {
+    // Exact duration = totalFrames / outputFps
+    const outputFps = opts.customOutputFramerate && opts.customOutputFramerateNumber ? Number(opts.customOutputFramerateNumber) : inputFps;
+    const totalFrames = Number(opts.totalFrames || 0);
+    if (outputFps > 0 && totalFrames > 0) {
+      const duration = (totalFrames / outputFps).toFixed(3);
+      args.push('-t', `${duration}`);
+    }
+
+    // Container-appropriate audio codec
+    if (profile.extension === 'webm') {
+      args.push('-c:a', 'libopus', '-b:a', '128k');
+    } else {
+      args.push('-c:a', 'aac', '-b:a', '192k');
+    }
+
+    // Explicit mapping: 0 = images(video), 1 = audio
+    args.push('-map', '0:v:0', '-map', '1:a:0');
+    args.push('-shortest');
   }
 
   // Output file

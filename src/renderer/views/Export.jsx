@@ -31,6 +31,7 @@ const Export = ({ t }) => {
   const [videoRenderingProgress, setVideoRenderingProgress] = useState(0);
   const [resolutions, setResolutions] = useState(null);
   const [bestResolution, setBestResolution] = useState(null);
+  
 
   const { register, handleSubmit, watch } = useForm({
     mode: 'all',
@@ -116,7 +117,7 @@ const Export = ({ t }) => {
       track_id: track,
       event_key: settings.EVENT_KEY,
       add_ending_text: data.addEndingText,
-      ending_text: project?.title ? `Filmą sukūrė: ${project.title}` : '',
+      ending_text: project?.title ? `${project.title}` : '',
       uploadToDrive: data.uploadToDrive,
       userEmail: data.userEmail,
     });

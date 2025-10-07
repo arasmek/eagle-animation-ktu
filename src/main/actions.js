@@ -58,6 +58,20 @@ const actions = {
     const projects = await getProjectsList(PROJECTS_PATH);
     return projects.map(computeProject);
   },
+  LIST_AUDIO_TRACKS: async () => {
+    try {
+      const { readdir } = await import('node:fs/promises');
+      const { join } = await import('node:path');
+      const dir = join(process.cwd(), 'resources', 'audio');
+      const files = await readdir(dir, { withFileTypes: true });
+      return files
+        .filter((f) => f.isFile())
+        .map((f) => f.name)
+        .filter((n) => /\.(mp3|wav|ogg|m4a)$/i.test(n));
+    } catch (e) {
+      return [];
+    }
+  },
   NEW_PROJECT: async (evt, { title }) => {
     const data = await createProject(PROJECTS_PATH, title);
     return computeProject(data);
@@ -215,6 +229,7 @@ const actions = {
       ending_text,
       uploadToDrive,
       userEmail,
+      background_sound,
     },
     sendToRenderer
   ) => {
@@ -256,6 +271,7 @@ const actions = {
         ending_text,
         uploadToDrive,
         userEmail,
+        backgroundSound: background_sound,
       },
       (progress) => sendToRenderer('FFMPEG_PROGRESS', { progress })
     );

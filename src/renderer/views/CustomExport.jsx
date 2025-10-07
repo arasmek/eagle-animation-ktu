@@ -68,6 +68,7 @@ const CustomExport = ({ t }) => {
       addEndingText: false,
       uploadToDrive: false,
       userEmail: '',
+      backgroundSound: 'none',
     },
   });
 
@@ -98,6 +99,7 @@ const CustomExport = ({ t }) => {
   ];
 
   const framesKey = JSON.stringify(project?.scenes?.[Number(track)]?.pictures);
+  const [audioTracks, setAudioTracks] = useState([]);
   useEffect(() => {
     GetFrameResolutions(id, Number(track), project?.scenes?.[Number(track)]?.pictures)
       .then((d) => {
@@ -108,6 +110,19 @@ const CustomExport = ({ t }) => {
         setResolutions(null);
       });
   }, [framesKey]);
+
+  // Load available background audio tracks
+  useEffect(() => {
+    (async () => {
+      try {
+        const tracks = (await window.EA('LIST_AUDIO_TRACKS')) || [];
+        const options = tracks.map((n) => ({ value: n, label: n.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ') }));
+        setAudioTracks(options);
+      } catch (e) {
+        setAudioTracks([]);
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -237,9 +252,10 @@ const CustomExport = ({ t }) => {
       public_code: data.mode === 'send' ? newCode : undefined,
       compress_as_zip: data.mode === 'frames' ? data.compressAsZip && appCapabilities.includes('EXPORT_FRAMES_ZIP') : false,
       add_ending_text: data.addEndingText,
-      ending_text: project?.title ? `Filmą sukūrė: ${project.title}` : '',
+      ending_text: project?.title ? `${project.title}` : '',
       uploadToDrive: data.uploadToDrive,
       userEmail: data.userEmail,
+      background_sound: data.backgroundSound && data.backgroundSound !== 'none' ? data.backgroundSound : undefined,
     });
 
     setIsExporting(false);
@@ -272,6 +288,9 @@ const CustomExport = ({ t }) => {
                   <>
                     <FormGroup label={t('Video format')} description={t('The exported video format')}>
                       <Select control={control} options={formats} register={register('format')} />
+                    </FormGroup>
+                    <FormGroup label={t('Background sound')} description={t('Add background music to the exported video')}>
+                      <Select control={control} options={[{ value: 'none', label: t('None') }, ...audioTracks]} register={register('backgroundSound')} />
                     </FormGroup>
                     {watch('mode') === 'video' && (
                       <FormGroup label={t('Add ending text')} description={t('Shows name of the project at the end of the video.')}>
