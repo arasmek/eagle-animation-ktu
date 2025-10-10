@@ -3,13 +3,14 @@ import useProjects from '@hooks/useProjects';
 import { useLayoutEffect } from 'react';
 import { withTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { QRCodeCanvas } from 'qrcode.react';
 
 import IconDone from './assets/done.svg?jsx';
 import IconQuit from './assets/quit.svg?jsx';
 
 import * as style from './style.module.css';
 
-const ExportOverlay = ({ t, publicCode = null, onCancel = null, isExporting = false, progress = 0 }) => {
+const ExportOverlay = ({ t, publicCode = null, onCancel = null, isExporting = false, progress = 0, driveLink = null }) => {
   const { actions: projectsActions } = useProjects();
   const navigate = useNavigate();
 
@@ -56,7 +57,24 @@ const ExportOverlay = ({ t, publicCode = null, onCancel = null, isExporting = fa
           <div className={style.done}>
             <IconDone />
           </div>
-          {publicCode && <ActionCard onClick={handleCreateProject} title={t('Create new project')} sizeAuto />}
+          {driveLink && (
+            <div style={{ marginTop: '1.5rem', textAlign: 'center', color: '#fff', maxWidth: '320px' }}>
+              <div style={{ fontSize: '1.1em', fontWeight: 600, marginBottom: '0.5rem' }}>{t('Download from Google Drive')}</div>
+              <a
+                href={driveLink}
+                target="_blank"
+                rel="noreferrer"
+                style={{ color: '#fff', textDecoration: 'underline', wordBreak: 'break-word', display: 'inline-block', marginBottom: '0.75rem' }}
+              >
+                {t('Open link')}
+              </a>
+              <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center' }}>
+                <div style={{ background: '#fff', padding: '12px', borderRadius: '12px' }}>
+                  <QRCodeCanvas value={driveLink} size={160} includeMargin fgColor="#000000" bgColor="#ffffff" />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
       {isExporting && <div className={style.info}>{t('Export will take a while, please be patient')}</div>}

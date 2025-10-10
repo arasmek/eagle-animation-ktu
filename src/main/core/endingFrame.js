@@ -1,17 +1,30 @@
 import { createCanvas, loadImage, registerFont } from 'canvas';
+import fs from 'node:fs';
+import path from 'node:path';
+import { app } from 'electron';
 
-// Register Inter font from user-provided path
-registerFont(
-  'C:/Users/CiaAndriausPKompas/AppData/Local/Microsoft/Windows/Fonts/Inter-SemiBold.otf',
-  { family: 'Inter' }
-);
+// Register Inter font from packaged or local resources if available
+(() => {
+  const resourcesBase = app?.isPackaged ? process.resourcesPath : path.join(process.cwd(), 'resources');
+  const candidates = [
+    path.join(resourcesBase, 'fonts', 'Inter-SemiBold.otf'),
+    path.join(resourcesBase, 'Inter-SemiBold.otf'),
+    path.join(process.cwd(), 'resources', 'fonts', 'Inter-SemiBold.otf'),
+    path.join(process.cwd(), 'Inter-SemiBold.otf'),
+  ];
+  const fontPath = candidates.find((p) => {
+    try {
+      return fs.existsSync(p);
+    } catch (e) {
+      return false;
+    }
+  });
+  if (fontPath) {
+    registerFont(fontPath, { family: 'Inter' });
+  }
+})();
 
-export async function createEndingFrame({
-  name,
-  width,
-  height,
-  color = '#fff',
-}) {
+export async function createEndingFrame({ text, width, height, color = '#fff' }) {
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
 
@@ -35,7 +48,7 @@ export async function createEndingFrame({
 
   // Line 2: Name (bigger font, +30px = 78px)
   ctx.font = '78px Inter';
-  ctx.fillText(name, width / 2, y);
+  ctx.fillText(text, width / 2, y);
 
   // GAP
   y += 100;
@@ -47,7 +60,9 @@ export async function createEndingFrame({
 
   // Logo at bottom
   try {
-    const logo = await loadImage('resources/IF_LT_Baltas.png');
+    const resourcesBase = app?.isPackaged ? process.resourcesPath : path.join(process.cwd(), 'resources');
+    const logoPath = path.join(resourcesBase, 'IF_LT_Baltas.png');
+    const logo = await loadImage(logoPath);
     const logoWidth = Math.min(width * 0.25, logo.width);
     const logoHeight = (logoWidth / logo.width) * logo.height;
     const logoX = (width - logoWidth) / 2;

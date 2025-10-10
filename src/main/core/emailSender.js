@@ -1,6 +1,28 @@
 import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
-dotenv.config();
+import path from 'node:path';
+import fs from 'node:fs';
+import { app } from 'electron';
+
+(() => {
+  try {
+    const userData = app?.getPath('userData') || process.cwd();
+    const userEnv = path.join(userData, '.env');
+    if (fs.existsSync(userEnv)) {
+      dotenv.config({ path: userEnv });
+      return;
+    }
+    const resourcesBase = app?.isPackaged ? process.resourcesPath : path.join(process.cwd(), 'resources');
+    const bundledEnv = path.join(resourcesBase, '.env');
+    if (fs.existsSync(bundledEnv)) {
+      dotenv.config({ path: bundledEnv });
+      return;
+    }
+    dotenv.config();
+  } catch {
+    dotenv.config();
+  }
+})();
 
 export async function sendExportEmail({ to, link }) {
   console.log('[EMAIL] sendExportEmail called with:', { to, link });

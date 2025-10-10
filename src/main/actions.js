@@ -1,6 +1,6 @@
 import { copyFile } from 'node:fs/promises';
 
-import { shell } from 'electron';
+import { app, shell } from 'electron';
 import { mkdirp } from 'mkdirp';
 import fetch from 'node-fetch';
 import { join } from 'path-browserify';
@@ -62,12 +62,26 @@ const actions = {
     try {
       const { readdir } = await import('node:fs/promises');
       const { join } = await import('node:path');
-      const dir = join(process.cwd(), 'resources', 'audio');
-      const files = await readdir(dir, { withFileTypes: true });
-      return files
-        .filter((f) => f.isFile())
-        .map((f) => f.name)
-        .filter((n) => /\.(mp3|wav|ogg|m4a)$/i.test(n));
+      const { homedir } = await import('node:os');
+      const desktopDir = join(homedir(), 'Desktop', 'audio');
+      const resourcesBase = app?.isPackaged ? process.resourcesPath : join(process.cwd(), 'resources');
+      const bundledDir = join(resourcesBase, 'audio');
+      const dirs = [desktopDir, bundledDir];
+      const found = [];
+      for (const dir of dirs) {
+        try {
+          const entries = await readdir(dir, { withFileTypes: true });
+          for (const entry of entries) {
+            if (entry.isFile() && /\.(mp3|wav|ogg|m4a)$/i.test(entry.name)) {
+              found.push([entry.name, dir]);
+            }
+          }
+        } catch (_) {}
+      }
+      const seen = new Set();
+      return found
+        .filter(([name]) => (seen.has(name) ? false : (seen.add(name), true)))
+        .map(([name]) => name);
     } catch (e) {
       return [];
     }
@@ -233,14 +247,32 @@ const actions = {
     },
     sendToRenderer
   ) => {
+    const projectPath = join(PROJECTS_PATH, project_id);
+    const projectData = await getProjectData(projectPath);
+
+    const sanitizeForFile = (value) =>
+      (value || '')
+        .toString()
+        .trim()
+        .replace(/[^a-z0-9-_]/gi, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_|_$/g, '');
+
+    const now = new Date();
+    const ts = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+    const emailSlug = sanitizeForFile(userEmail);
+    const projectSlug = sanitizeForFile(
+      projectData?.project?.authorsName || projectData?.project?.author || projectData?.project?.title || 'video'
+    );
+    const exportBaseName = emailSlug ? `${emailSlug}_${ts}` : `${projectSlug || 'video'}_${ts}`;
+
     // Force output path to a hardcoded file in the project folder
-    const safeEmail = userEmail.replace(/[^a-zA-Z0-9-_]/g, '_');
-    const hardcodedPath = join(process.env.USERPROFILE, 'Desktop', 'stopmotion', `${safeEmail}.mp4`);
+    const hardcodedPath = join(process.env.USERPROFILE, 'Desktop', 'stopmotion', `${exportBaseName}.mp4`);
     output_path = hardcodedPath;
 
     if (mode === 'frames') {
       if (output_path) {
-        const bufferDirectoryPath = join(join(PROJECTS_PATH, project_id), `/.tmp/`);
+        const bufferDirectoryPath = join(projectPath, `/.tmp/`);
         for (const frame of frames) {
           await copyFile(join(bufferDirectoryPath, frame.buffer_id), join(output_path, `frame-${frame.index.toString().padStart(6, '0')}.${frame.extension}`));
         }
@@ -257,8 +289,8 @@ const actions = {
 
     const path = mode === 'send' ? join(PROJECTS_PATH, '/.sync/', `${public_code}.${profile.extension}`) : output_path;
 
-    await exportProjectScene(
-      join(PROJECTS_PATH, project_id),
+    const result = await exportProjectScene(
+      projectPath,
       track_id,
       frames,
       path,
@@ -272,9 +304,14 @@ const actions = {
         uploadToDrive,
         userEmail,
         backgroundSound: background_sound,
+        exportBaseName,
       },
       (progress) => sendToRenderer('FFMPEG_PROGRESS', { progress })
     );
+
+    if (typeof sendToRenderer === 'function') {
+      sendToRenderer('EXPORT_COMPLETED', { driveLink: result?.driveLink || null });
+    }
 
     if (mode === 'send') {
       const syncList = await getSyncList(PROJECTS_PATH);

@@ -45,6 +45,7 @@ const CustomExport = ({ t }) => {
   const [frameRenderingProgress, setFrameRenderingProgress] = useState(0);
   const [videoRenderingProgress, setVideoRenderingProgress] = useState(0);
   const [bestResolution, setBestResolution] = useState(null);
+  const [driveLink, setDriveLink] = useState(null);
 
   const [searchParams] = useSearchParams();
   const { settings } = useSettings();
@@ -140,6 +141,12 @@ const CustomExport = ({ t }) => {
     });
   }, []);
 
+  useEffect(() => {
+    window.EAEvents('EXPORT_COMPLETED', (evt, args = {}) => {
+      setDriveLink(args.driveLink || null);
+    });
+  }, []);
+
   // Choose the right quality when we have a status change or when resolution array is loaded
   useEffect(() => {
     setValue('imageResolution', imageResolutions.find((e) => e.value === watch('imageResolution'))?.value || imageResolutions.find((e) => e.value !== 'original')?.value || 'original');
@@ -199,6 +206,7 @@ const CustomExport = ({ t }) => {
 
     setIsInfosOpened(true);
     setIsExporting(true);
+    setDriveLink(null);
     setFrameRenderingProgress(0);
     setVideoRenderingProgress(0);
 
@@ -387,9 +395,11 @@ const CustomExport = ({ t }) => {
           publicCode={publicCode}
           isExporting={isExporting}
           progress={progress}
+          driveLink={driveLink}
           onCancel={() => {
             setIsInfosOpened(false);
             setIsExporting(false);
+            setDriveLink(null);
           }}
         />
       )}

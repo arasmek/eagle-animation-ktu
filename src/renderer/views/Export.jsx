@@ -31,7 +31,8 @@ const Export = ({ t }) => {
   const [videoRenderingProgress, setVideoRenderingProgress] = useState(0);
   const [resolutions, setResolutions] = useState(null);
   const [bestResolution, setBestResolution] = useState(null);
-  
+  const [driveLink, setDriveLink] = useState(null);
+
 
   const { register, handleSubmit, watch } = useForm({
     mode: 'all',
@@ -73,6 +74,12 @@ const Export = ({ t }) => {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [handleBack]);
+
+  useEffect(() => {
+    window.EAEvents('EXPORT_COMPLETED', (evt, args = {}) => {
+      setDriveLink(args.driveLink || null);
+    });
+  }, []);
   const progress = watch('mode') === 'frames' ? Math.min(frameRenderingProgress, 1) : Math.min(frameRenderingProgress / 2, 0.5) + Math.min(videoRenderingProgress / 2, 0.5);
 
   const handleExport = async (data) => {
@@ -88,6 +95,7 @@ const Export = ({ t }) => {
 
     setIsInfosOpened(true);
     setIsExporting(true);
+    setDriveLink(null);
     setFrameRenderingProgress(0);
     setVideoRenderingProgress(0);
 
@@ -163,9 +171,11 @@ const Export = ({ t }) => {
           publicCode={null}
           isExporting={isExporting}
           progress={progress}
+          driveLink={driveLink}
           onCancel={() => {
             setIsInfosOpened(false);
             setIsExporting(false);
+            setDriveLink(null);
           }}
         />
       )}

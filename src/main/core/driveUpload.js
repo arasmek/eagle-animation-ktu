@@ -2,14 +2,30 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import { google } from 'googleapis';
 import path from 'path';
+import { app } from 'electron';
 dotenv.config();
 
 // You need to set up OAuth2 credentials and token.json for Google Drive API
 // See: https://developers.google.com/drive/api/v3/quickstart/nodejs
 
 const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
-const TOKEN_PATH = path.join(process.cwd(), 'token.json');
-const CREDENTIALS_PATH = path.join(process.cwd(), 'credentials.json');
+const userDataDir = app?.getPath('userData') || process.cwd();
+const RESOURCES_DIR = app?.isPackaged ? process.resourcesPath : path.join(process.cwd(), 'resources');
+
+const resolvePath = (fileName) => {
+  const userPath = path.join(userDataDir, fileName);
+  if (fs.existsSync(userPath)) {
+    return userPath;
+  }
+  const bundledPath = path.join(RESOURCES_DIR, fileName);
+  if (fs.existsSync(bundledPath)) {
+    return bundledPath;
+  }
+  return userPath;
+};
+
+const TOKEN_PATH = resolvePath('token.json');
+const CREDENTIALS_PATH = resolvePath('credentials.json');
 
 function loadCredentials() {
   return JSON.parse(fs.readFileSync(CREDENTIALS_PATH, 'utf8'));

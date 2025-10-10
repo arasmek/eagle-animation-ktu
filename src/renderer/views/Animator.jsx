@@ -106,6 +106,7 @@ const Animator = ({ t }) => {
   const [currentFrameId, setCurrentFrameId] = useState(false);
   const [deleteOnLiveViewConfirmation, setDeleteOnLiveViewConfirmation] = useState(false);
   const [disableKeyboardShortcuts, setDisableKeyboardShortcuts] = useState(false);
+  const savingFramesRef = useRef(false);
 
   const { project, actions: projectActions } = useProject({ id });
 
@@ -197,14 +198,18 @@ const Animator = ({ t }) => {
   const takePictures =
     (nbPicturesToTake = null) =>
     async () => {
-      if (isTakingPicture || !currentCamera) {
+      if (isTakingPicture || savingFramesRef.current || !currentCamera) {
         return;
       }
+
+      savingFramesRef.current = true;
       flushSync(() => {
         setIsTakingPicture(true);
       });
 
       setStartedAt((oldValue) => (oldValue ? oldValue : new Date().getTime() / 1000));
+
+      const saveQueue = [];
 
       for (let i = 0; i < (Number(nbPicturesToTake !== null ? nbPicturesToTake : settings.CAPTURE_FRAMES) || 1); i++) {
         const nbFramesToTake = (settings.AVERAGING_ENABLED ? Number(settings.AVERAGING_VALUE) : 1) || 1;
@@ -218,7 +223,15 @@ const Animator = ({ t }) => {
             playSound(isAprilFoolsDay ? soundEagle : soundShutter);
           }
 
-          await projectActions.addFrame(track, Buffer.from(buffer), type?.includes('png') ? 'png' : 'jpg', isPlaying ? false : currentFrameId);
+          const savePromise = projectActions
+            .addFrame(track, Buffer.from(buffer), type?.includes('png') ? 'png' : 'jpg', isPlaying ? false : currentFrameId)
+            .catch((err) => {
+              console.error('Failed to save captured frame', err);
+              if (settings.SOUNDS) {
+                playSound(soundError);
+              }
+            });
+          saveQueue.push(savePromise);
         } catch (err) {
           if (settings.SOUNDS) {
             playSound(soundError);
@@ -229,6 +242,16 @@ const Animator = ({ t }) => {
 
       flushSync(() => {
         setIsTakingPicture(false);
+      });
+      playerRef.current?.showFrame(false);
+
+      if (!saveQueue.length) {
+        savingFramesRef.current = false;
+        return;
+      }
+
+      Promise.allSettled(saveQueue).finally(() => {
+        savingFramesRef.current = false;
       });
     };
 

@@ -5,6 +5,7 @@ import { mkdirp } from 'mkdirp';
 import { rimraf } from 'rimraf';
 import { v4 as uuidv4 } from 'uuid';
 
+import { app } from 'electron';
 import { getFFmpegArgs, parseFFmpegLogs, getEncodingProfile } from '../../common/ffmpeg';
 import { uploadToDrive } from './driveUpload';
 import { createEndingFrame } from './endingFrame';
@@ -28,13 +29,14 @@ export const exportProjectScene = async (projectPath, scene, frames, filePath, f
   }
 
   const fps = opts?.framerate || project.project.scenes[scene].framerate;
+  let driveLink = null;
   // If ending text is requested, generate and add ending frame(s)
   if (opts.add_ending_text && opts.ending_text) {
     const width = frames[0]?.width || 1920;
     const height = frames[0]?.height || 1080;
     const endingFrameCount = Math.round(fps * 1); // 1 second
     const endingBuffer = await createEndingFrame({
-      name: opts.ending_text,
+      text: opts.ending_text,
       width,
       height,
       font: 'bold 48px Open Sans',
@@ -65,17 +67,21 @@ export const exportProjectScene = async (projectPath, scene, frames, filePath, f
     if (opts?.backgroundSound) {
       const path = require('node:path');
       const fs = require('node:fs');
+      const os = require('node:os');
       const audioFileName = opts.backgroundSound; // e.g., mytrack.mp3
-      const resourceAudioPath = join(process.cwd(), 'resources', 'audio', audioFileName);
-      if (fs.existsSync(resourceAudioPath)) {
-        const audioExt = path.extname(resourceAudioPath) || '.mp3';
+      const desktopAudioPath = join(os.homedir(), 'Desktop', 'audio', audioFileName);
+      const resourcesBase = app?.isPackaged ? process.resourcesPath : path.join(process.cwd(), 'resources');
+      const resourceAudioPath = join(resourcesBase, 'audio', audioFileName);
+      const sourcePath = fs.existsSync(desktopAudioPath) ? desktopAudioPath : resourceAudioPath;
+      if (fs.existsSync(sourcePath)) {
+        const audioExt = path.extname(sourcePath) || '.mp3';
         const localAudioName = `bg-audio${audioExt}`;
         const localAudioPath = join(directoryPath, localAudioName);
-        await copyFile(resourceAudioPath, localAudioPath);
+        await copyFile(sourcePath, localAudioPath);
         ffmpegOpts.backgroundSoundPath = localAudioName; // relative to cwd
         console.log(`[EXPORT] Attached background audio: ${audioFileName}`);
       } else {
-        console.warn(`[EXPORT] Background audio not found: ${resourceAudioPath}`);
+        console.warn(`[EXPORT] Background audio not found: ${desktopAudioPath} or ${resourceAudioPath}`);
       }
     }
   } catch (e) {
@@ -122,7 +128,7 @@ export const exportProjectScene = async (projectPath, scene, frames, filePath, f
   await rimraf(directoryPath);
   await rimraf(bufferDirectoryPath);
 
-  const sanitize = (email) => email.replace(/[^a-z0-9]/gi, '_');
+  const sanitize = (value) => (value || '').toString().replace(/[^a-z0-9-_]/gi, '_');
   console.log('[EXPORT] opts:', { uploadToDrive: opts.uploadToDrive, userEmail: opts.userEmail });
   // Upload to Google Drive if requested, then send email if userEmail is provided
   if (opts.uploadToDrive) {
@@ -132,10 +138,11 @@ export const exportProjectScene = async (projectPath, scene, frames, filePath, f
     if (fs.existsSync(filePath)) {
       console.log('[DRIVE] File exists, starting upload');
       try {
-        const safeName = opts.userEmail ? sanitize(opts.userEmail) : project.project.title || 'video';
+        const baseForDrive = sanitize(opts.exportBaseName || opts.userEmail || project.project.title || 'video');
+        const safeName = baseForDrive || 'video';
         const driveFileName = `${safeName}.mp4`;
 
-        const driveLink = await uploadToDrive(filePath, driveFileName, '1ZiZGdbV4nZWQb1v_rGbC2Hq0I_ErZHGJ');
+        driveLink = await uploadToDrive(filePath, driveFileName, '1ZiZGdbV4nZWQb1v_rGbC2Hq0I_ErZHGJ');
         console.log(`[DRIVE] Uploaded to Google Drive: ${driveLink}`);
 
         if (driveLink && opts.userEmail) {
@@ -150,6 +157,7 @@ export const exportProjectScene = async (projectPath, scene, frames, filePath, f
       console.error(`[DRIVE] Exported video file does not exist: ${filePath}`);
     }
   }
+  return { driveLink };
 };
 
 // Sync list
