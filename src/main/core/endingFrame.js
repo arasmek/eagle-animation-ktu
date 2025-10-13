@@ -7,10 +7,10 @@ import { app } from 'electron';
 (() => {
   const resourcesBase = app?.isPackaged ? process.resourcesPath : path.join(process.cwd(), 'resources');
   const candidates = [
-    path.join(resourcesBase, 'fonts', 'Inter-SemiBold.otf'),
-    path.join(resourcesBase, 'Inter-SemiBold.otf'),
-    path.join(process.cwd(), 'resources', 'fonts', 'Inter-SemiBold.otf'),
-    path.join(process.cwd(), 'Inter-SemiBold.otf'),
+    path.join(resourcesBase, 'fonts', 'Inter-Bold.otf'),
+    path.join(resourcesBase, 'Inter-Bold.otf'),
+    path.join(process.cwd(), 'resources', 'fonts', 'Inter-Bold.otf'),
+    path.join(process.cwd(), 'Inter-Bold.otf'),
   ];
   const fontPath = candidates.find((p) => {
     try {
@@ -28,36 +28,42 @@ export async function createEndingFrame({ text, width, height, color = '#fff' })
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
 
-  // Background
-  ctx.fillStyle = '#234A7D';
-  ctx.fillRect(0, 0, width, height);
+  // Background from branded card, fallback to solid color on failure
+  try {
+    const resourcesBase = app?.isPackaged ? process.resourcesPath : path.join(process.cwd(), 'resources');
+    const backgroundPath = path.join(resourcesBase, 'NameCard.png');
+    const background = await loadImage(backgroundPath);
+    ctx.drawImage(background, 0, 0, width, height);
+  } catch (e) {
+    ctx.fillStyle = '#234A7D';
+    ctx.fillRect(0, 0, width, height);
+  }
 
   ctx.fillStyle = color;
-  ctx.textAlign = 'center';
+  ctx.textAlign = 'left';
   ctx.textBaseline = 'top'; // easier vertical layout
 
   // Measure top offset
-  let y = height / 3.5; // start roughly 1/3 from top
+  //let y = height / 3.5; // start roughly 1/3 from top
 
   // Line 1: "Animacijos autorius:"
-  ctx.font = '48px Inter';
-  ctx.fillText('Animacijos autorius:', width / 2, y);
-
-  // GAP
-  y += 70;
+  //ctx.font = '48px Inter';
+  //ctx.fillText('Animacijos autorius:', width / 2, y);
 
   // Line 2: Name (bigger font, +30px = 78px)
-  ctx.font = '78px Inter';
-  ctx.fillText(text, width / 2, y);
+  ctx.font = 'bold 104px Inter';
+  const nameX = 105;
+  const nameY = 525;
+  ctx.fillText(text, nameX, nameY);
 
   // GAP
-  y += 100;
+  const yearY = nameY + 370;
 
   // Line 3: © YEAR
   const year = new Date().getFullYear();
-  ctx.font = '42px Inter';
-  ctx.fillText(`© ${year}`, width / 2, y);
-
+  ctx.font = 'bold 49px Inter';
+  ctx.fillText(`© ${year}`, nameX, yearY);
+/*
   // Logo at bottom
   try {
     const resourcesBase = app?.isPackaged ? process.resourcesPath : path.join(process.cwd(), 'resources');
@@ -69,8 +75,9 @@ export async function createEndingFrame({ text, width, height, color = '#fff' })
     const logoY = height - logoHeight - 32;
     ctx.drawImage(logo, logoX, logoY, logoWidth, logoHeight);
   } catch (e) {
-    // logo missing — skip
+     logo missing — skip
   }
+  */
 
   return canvas.toBuffer('image/jpeg');
 }
