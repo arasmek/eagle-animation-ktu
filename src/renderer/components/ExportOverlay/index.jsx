@@ -1,6 +1,6 @@
 import ActionCard from '@components/ActionCard';
 import useProjects from '@hooks/useProjects';
-import { useLayoutEffect } from 'react';
+import { useEffect, useId, useLayoutEffect, useMemo, useRef } from 'react';
 import { withTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { QRCodeCanvas } from 'qrcode.react';
@@ -10,9 +10,25 @@ import IconQuit from './assets/quit.svg?jsx';
 
 import * as style from './style.module.css';
 
-const ExportOverlay = ({ t, publicCode = null, onCancel = null, isExporting = false, progress = 0, driveLink = null }) => {
+const ExportOverlay = ({
+  t,
+  publicCode = null,
+  onCancel = null,
+  isExporting = false,
+  progress = 0,
+  driveLink = null,
+  exportBaseName = null,
+}) => {
   const { actions: projectsActions } = useProjects();
   const navigate = useNavigate();
+  const defaultCanvasId = useId();
+  const canvasId = useMemo(() => {
+    if (exportBaseName) {
+      return `ea-qr-${exportBaseName}`;
+    }
+    return `ea-qr-${defaultCanvasId.replace(/:/g, '-')}`;
+  }, [exportBaseName, defaultCanvasId]);
+  const hasSavedQrRef = useRef(false);
 
   const handleCreateProject = async () => {
     const title = t('New project');
@@ -27,6 +43,131 @@ const ExportOverlay = ({ t, publicCode = null, onCancel = null, isExporting = fa
       document.body.style.overflow = '';
     };
   });
+
+  useEffect(() => {
+    console.log('[ExportOverlay] props updated', { isExporting, driveLink, exportBaseName });
+  }, [isExporting, driveLink, exportBaseName]);
+
+  useEffect(() => {
+    if (isExporting || !driveLink || !exportBaseName) {
+      hasSavedQrRef.current = false;
+      console.log('[ExportOverlay] reset hasSavedQrRef', { isExporting, driveLinkPresent: Boolean(driveLink), exportBaseName });
+    }
+  }, [isExporting, driveLink, exportBaseName]);
+
+  useEffect(() => {
+    if (isExporting || !driveLink || !exportBaseName) {
+      console.log('[ExportOverlay] skip capture - missing data', {
+        isExporting,
+        driveLinkPresent: Boolean(driveLink),
+        exportBaseName,
+      });
+      return;
+    }
+    if (hasSavedQrRef.current) {
+      console.log('[ExportOverlay] skip capture - already saved');
+      return;
+    }
+
+    console.log('[ExportOverlay] attempting capture', { isExporting, driveLink, exportBaseName });
+    let cancelled = false;
+    let attempt = 0;
+    const maxAttempts = 8;
+    const pendingTimers = new Set();
+
+    const scheduleRetry = () => {
+      if (cancelled || hasSavedQrRef.current || attempt >= maxAttempts) {
+        return;
+      }
+      attempt += 1;
+      const delay = 150 * attempt;
+      const timer = setTimeout(() => {
+        pendingTimers.delete(timer);
+        trySave();
+      }, delay);
+      pendingTimers.add(timer);
+    };
+
+    function trySave() {
+      if (cancelled || hasSavedQrRef.current) {
+        return;
+      }
+      const canvas = document.getElementById(canvasId);
+      if (!(canvas instanceof HTMLCanvasElement)) {
+        scheduleRetry();
+        return;
+      }
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        scheduleRetry();
+        return;
+      }
+      let hasDarkPixel = false;
+      try {
+        const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < data.length; i += 4) {
+          if (data[i] < 240 || data[i + 1] < 240 || data[i + 2] < 240) {
+            hasDarkPixel = true;
+            break;
+          }
+        }
+      } catch (err) {
+        // getImageData may fail if canvas is not ready yet; retry
+      }
+      if (!hasDarkPixel) {
+        scheduleRetry();
+        return;
+      }
+      let dataUrl = '';
+      try {
+        dataUrl = canvas.toDataURL('image/png');
+      } catch (err) {
+        console.warn('[ExportOverlay] canvas.toDataURL failed', err);
+        scheduleRetry();
+        return;
+      }
+      if (!dataUrl || dataUrl === 'data:image/png;base64,' || dataUrl === 'data:,') {
+        console.warn('[ExportOverlay] Empty QR data URL, retrying', { attempt });
+        scheduleRetry();
+        return;
+      }
+      if (typeof window?.EA !== 'function') {
+        hasSavedQrRef.current = true;
+        return;
+      }
+      console.log('[ExportOverlay] Sending SAVE_QR_IMAGE', { exportBaseName, attempt });
+      window
+        .EA('SAVE_QR_IMAGE', { dataUrl, exportBaseName })
+        .then((response) => {
+          if (cancelled) {
+            return;
+          }
+          if (!response?.success) {
+            console.error('SAVE_QR_IMAGE failed', response?.error);
+            hasSavedQrRef.current = false;
+            scheduleRetry();
+            return;
+          }
+          console.log('[ExportOverlay] SAVE_QR_IMAGE success', response?.path);
+          hasSavedQrRef.current = true;
+        })
+        .catch((error) => {
+          if (cancelled) {
+            return;
+          }
+          console.error('SAVE_QR_IMAGE error', error);
+          hasSavedQrRef.current = false;
+          scheduleRetry();
+        });
+    }
+
+    trySave();
+
+    return () => {
+      cancelled = true;
+      pendingTimers.forEach((timer) => clearTimeout(timer));
+    };
+  }, [canvasId, driveLink, exportBaseName, isExporting]);
 
   return (
     <div className={style.background}>
@@ -70,7 +211,7 @@ const ExportOverlay = ({ t, publicCode = null, onCancel = null, isExporting = fa
               </a>
               <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center' }}>
                 <div style={{ background: '#fff', padding: '12px', borderRadius: '12px' }}>
-                  <QRCodeCanvas value={driveLink} size={160} includeMargin fgColor="#000000" bgColor="#ffffff" />
+                  <QRCodeCanvas id={canvasId} value={driveLink} size={160} includeMargin fgColor="#000000" bgColor="#ffffff" />
                 </div>
               </div>
             </div>

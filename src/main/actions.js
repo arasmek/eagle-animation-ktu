@@ -1,8 +1,9 @@
-import { copyFile } from 'node:fs/promises';
+import { access, copyFile, readdir, writeFile } from 'node:fs/promises';
 
 import { app, shell } from 'electron';
 import { mkdirp } from 'mkdirp';
 import fetch from 'node-fetch';
+import { homedir } from 'node:os';
 import { join } from 'path-browserify';
 
 import { getEncodingProfile } from '../common/ffmpeg';
@@ -46,7 +47,78 @@ const computeProject = (data) => {
   return output;
 };
 
+const resolveQrSaveDirectory = async () => {
+  const customPath = process.env.EA_QR_SAVE_DIR?.trim();
+  if (customPath) {
+    try {
+      await mkdirp(customPath);
+      return customPath;
+    } catch (err) {
+      console.warn('[SAVE_QR_IMAGE] Failed to use EA_QR_SAVE_DIR', { customPath, error: err?.message });
+    }
+  }
+
+  const homeDir = process.env.USERPROFILE || homedir();
+  const baseCandidates = new Set();
+
+  const envOneDriveVars = [process.env.OneDriveCommercial, process.env.OneDriveConsumer, process.env.OneDrive];
+  envOneDriveVars.filter(Boolean).forEach((value) => baseCandidates.add(value));
+  baseCandidates.add(join(homeDir, 'OneDrive - Kaunas University of Technology'));
+  baseCandidates.add(join(homeDir, 'OneDrive - Personal'));
+  baseCandidates.add(join(homeDir, 'OneDrive'));
+
+  try {
+    const entries = await readdir(homeDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.isDirectory() && entry.name.toLowerCase().startsWith('onedrive')) {
+        baseCandidates.add(join(homeDir, entry.name));
+      }
+    }
+  } catch (err) {
+    console.warn('[SAVE_QR_IMAGE] Unable to scan home directory for OneDrive folders', err?.message);
+  }
+
+  for (const base of baseCandidates) {
+    if (!base) continue;
+    try {
+      await access(base);
+      const target = join(base, 'stopmotion');
+      await mkdirp(target);
+      return target;
+    } catch (err) {
+      // ignore and try the next candidate
+    }
+  }
+
+  const fallback = join(homeDir, 'Desktop', 'stopmotion');
+  await mkdirp(fallback);
+  return fallback;
+};
+
 const actions = {
+  SAVE_QR_IMAGE: async (evt, { dataUrl, exportBaseName }) => {
+    try {
+      if (!dataUrl || !exportBaseName) {
+        throw new Error('Missing QR data');
+      }
+
+      const match = /^data:image\/png;base64,(.+)$/i.exec(dataUrl);
+      if (!match) {
+        throw new Error('Invalid QR data URL');
+      }
+
+      const targetDir = await resolveQrSaveDirectory();
+      const filePath = join(targetDir, `${exportBaseName}.png`);
+      console.log('[SAVE_QR_IMAGE] Writing QR to', filePath);
+      const buffer = Buffer.from(match[1], 'base64');
+      await writeFile(filePath, buffer);
+      console.log('[SAVE_QR_IMAGE] Successfully wrote QR file', filePath);
+      return { success: true, path: filePath };
+    } catch (error) {
+      console.error('SAVE_QR_IMAGE failed', error);
+      return { success: false, error: error?.message || 'Unknown error' };
+    }
+  },
   GET_LAST_VERSION: async () => {
     if (CONTRIBUTE_REPOSITORY) {
       const res = await fetch(`https://raw.githubusercontent.com/${CONTRIBUTE_REPOSITORY}/master/package.json`).then((res) => res.json());
@@ -310,7 +382,9 @@ const actions = {
     );
 
     if (typeof sendToRenderer === 'function') {
-      sendToRenderer('EXPORT_COMPLETED', { driveLink: result?.driveLink || null });
+      const payload = { driveLink: result?.driveLink || null, exportBaseName };
+      console.log('[EXPORT] Emitting EXPORT_COMPLETED', payload);
+      sendToRenderer('EXPORT_COMPLETED', payload);
     }
 
     if (mode === 'send') {

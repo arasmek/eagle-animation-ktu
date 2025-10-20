@@ -32,6 +32,7 @@ const Export = ({ t }) => {
   const [resolutions, setResolutions] = useState(null);
   const [bestResolution, setBestResolution] = useState(null);
   const [driveLink, setDriveLink] = useState(null);
+  const [exportBaseName, setExportBaseName] = useState(null);
 
 
   const { register, handleSubmit, watch } = useForm({
@@ -76,9 +77,22 @@ const Export = ({ t }) => {
   }, [handleBack]);
 
   useEffect(() => {
-    window.EAEvents('EXPORT_COMPLETED', (evt, args = {}) => {
+    let cancelled = false;
+
+    const handler = (evt, args = {}) => {
+      if (cancelled) {
+        return;
+      }
+      console.log('[Export view] EXPORT_COMPLETED', args);
       setDriveLink(args.driveLink || null);
-    });
+      setExportBaseName(args.exportBaseName || null);
+    };
+
+    window.EAEvents('EXPORT_COMPLETED', handler);
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
   const progress = watch('mode') === 'frames' ? Math.min(frameRenderingProgress, 1) : Math.min(frameRenderingProgress / 2, 0.5) + Math.min(videoRenderingProgress / 2, 0.5);
 
@@ -96,6 +110,7 @@ const Export = ({ t }) => {
     setIsInfosOpened(true);
     setIsExporting(true);
     setDriveLink(null);
+    setExportBaseName(null);
     setFrameRenderingProgress(0);
     setVideoRenderingProgress(0);
 
@@ -172,10 +187,12 @@ const Export = ({ t }) => {
           isExporting={isExporting}
           progress={progress}
           driveLink={driveLink}
+          exportBaseName={exportBaseName}
           onCancel={() => {
             setIsInfosOpened(false);
             setIsExporting(false);
             setDriveLink(null);
+            setExportBaseName(null);
           }}
         />
       )}
