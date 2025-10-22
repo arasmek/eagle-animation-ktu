@@ -1,9 +1,8 @@
-import { access, copyFile, readdir, writeFile } from 'node:fs/promises';
+import { copyFile, writeFile } from 'node:fs/promises';
 
 import { app, shell } from 'electron';
 import { mkdirp } from 'mkdirp';
 import fetch from 'node-fetch';
-import { homedir } from 'node:os';
 import { join } from 'path-browserify';
 
 import { getEncodingProfile } from '../common/ffmpeg';
@@ -15,6 +14,7 @@ import { exportProjectScene, exportSaveTemporaryBuffer, getSyncList, saveSyncLis
 import { createProject, deleteProject, getProjectData, getProjectsList, projectSave, savePicture } from './core/projects';
 import { getSettings, saveSettings } from './core/settings';
 import { selectFile, selectFolder } from './core/utils';
+import { uploadToDrive } from './core/driveUpload';
 
 console.log(`💾 Eagle Animation files will be saved in the following folder: ${PROJECTS_PATH}`);
 
@@ -48,55 +48,14 @@ const computeProject = (data) => {
 };
 
 const resolveQrSaveDirectory = async () => {
-  const customPath = process.env.EA_QR_SAVE_DIR?.trim();
-  if (customPath) {
-    try {
-      await mkdirp(customPath);
-      return customPath;
-    } catch (err) {
-      console.warn('[SAVE_QR_IMAGE] Failed to use EA_QR_SAVE_DIR', { customPath, error: err?.message });
-    }
-  }
-
-  const homeDir = process.env.USERPROFILE || homedir();
-  const baseCandidates = new Set();
-
-  const envOneDriveVars = [process.env.OneDriveCommercial, process.env.OneDriveConsumer, process.env.OneDrive];
-  envOneDriveVars.filter(Boolean).forEach((value) => baseCandidates.add(value));
-  baseCandidates.add(join(homeDir, 'OneDrive - Kaunas University of Technology'));
-  baseCandidates.add(join(homeDir, 'OneDrive - Personal'));
-  baseCandidates.add(join(homeDir, 'OneDrive'));
-
-  try {
-    const entries = await readdir(homeDir, { withFileTypes: true });
-    for (const entry of entries) {
-      if (entry.isDirectory() && entry.name.toLowerCase().startsWith('onedrive')) {
-        baseCandidates.add(join(homeDir, entry.name));
-      }
-    }
-  } catch (err) {
-    console.warn('[SAVE_QR_IMAGE] Unable to scan home directory for OneDrive folders', err?.message);
-  }
-
-  for (const base of baseCandidates) {
-    if (!base) continue;
-    try {
-      await access(base);
-      const target = join(base, 'stopmotion');
-      await mkdirp(target);
-      return target;
-    } catch (err) {
-      // ignore and try the next candidate
-    }
-  }
-
-  const fallback = join(homeDir, 'Desktop', 'stopmotion');
-  await mkdirp(fallback);
-  return fallback;
+  const homeDir = process.env.USERPROFILE || require('node:os').homedir();
+  const target = join(homeDir, 'Desktop', 'stopmotion');
+  await mkdirp(target);
+  return target;
 };
 
 const actions = {
-  SAVE_QR_IMAGE: async (evt, { dataUrl, exportBaseName }) => {
+  SAVE_QR_IMAGE: async (evt, { dataUrl, exportBaseName, uploadToDrive: uploadToDriveFlag = false }) => {
     try {
       if (!dataUrl || !exportBaseName) {
         throw new Error('Missing QR data');
@@ -113,7 +72,21 @@ const actions = {
       const buffer = Buffer.from(match[1], 'base64');
       await writeFile(filePath, buffer);
       console.log('[SAVE_QR_IMAGE] Successfully wrote QR file', filePath);
-      return { success: true, path: filePath };
+
+      let driveLink = null;
+      let driveError = null;
+      if (uploadToDriveFlag) {
+        try {
+          const driveFileName = `${exportBaseName}_QR.png`;
+          driveLink = await uploadToDrive(filePath, driveFileName, '1ZiZGdbV4nZWQb1v_rGbC2Hq0I_ErZHGJ', 'image/png');
+          console.log('[SAVE_QR_IMAGE] Uploaded QR to Drive', driveLink);
+        } catch (err) {
+          driveError = err?.message || 'Unknown upload error';
+          console.error('[SAVE_QR_IMAGE] Drive upload failed', err);
+        }
+      }
+
+      return { success: true, path: filePath, driveLink, driveError };
     } catch (error) {
       console.error('SAVE_QR_IMAGE failed', error);
       return { success: false, error: error?.message || 'Unknown error' };

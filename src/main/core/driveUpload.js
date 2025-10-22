@@ -35,7 +35,7 @@ function loadToken() {
   return JSON.parse(fs.readFileSync(TOKEN_PATH, 'utf8'));
 }
 
-export async function uploadToDrive(filePath, fileName) {
+export async function uploadToDrive(filePath, fileName, folderId, mimeType = 'video/mp4') {
   console.log(`[DRIVE] Attempting to upload: ${filePath}`);
   if (!fs.existsSync(filePath)) {
     console.error(`[DRIVE] File does not exist: ${filePath}`);
@@ -48,9 +48,8 @@ export async function uploadToDrive(filePath, fileName) {
   oAuth2Client.setCredentials(token);
 
   const drive = google.drive({ version: 'v3', auth: oAuth2Client });
-  const folderId = arguments[2];
   const fileMetadata = folderId ? { name: fileName, parents: [folderId] } : { name: fileName };
-  const media = { mimeType: 'video/mp4', body: fs.createReadStream(filePath) };
+  const media = { mimeType, body: fs.createReadStream(filePath) };
 
   try {
     const file = await drive.files.create({ resource: fileMetadata, media, fields: 'id' });

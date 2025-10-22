@@ -135,9 +135,9 @@ const ExportOverlay = ({
         hasSavedQrRef.current = true;
         return;
       }
-      console.log('[ExportOverlay] Sending SAVE_QR_IMAGE', { exportBaseName, attempt });
+      console.log('[ExportOverlay] Sending SAVE_QR_IMAGE', { exportBaseName, attempt, uploadToDrive: Boolean(driveLink) });
       window
-        .EA('SAVE_QR_IMAGE', { dataUrl, exportBaseName })
+        .EA('SAVE_QR_IMAGE', { dataUrl, exportBaseName, uploadToDrive: Boolean(driveLink) })
         .then((response) => {
           if (cancelled) {
             return;
@@ -149,6 +149,11 @@ const ExportOverlay = ({
             return;
           }
           console.log('[ExportOverlay] SAVE_QR_IMAGE success', response?.path);
+          if (response?.driveError) {
+            console.error('[ExportOverlay] SAVE_QR_IMAGE drive upload error', response.driveError);
+          } else if (response?.driveLink) {
+            console.log('[ExportOverlay] SAVE_QR_IMAGE drive upload success', response.driveLink);
+          }
           hasSavedQrRef.current = true;
         })
         .catch((error) => {
