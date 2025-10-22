@@ -55,6 +55,14 @@ const resolveQrSaveDirectory = async () => {
 };
 
 const actions = {
+  GET_RESOURCE_FILE_URL: async (evt, { rel = '' } = {}) => {
+    try {
+      const clean = `${rel}`.replace(/^[/\\]+/, '');
+      return `ea-resource://${clean}`;
+    } catch (e) {
+      return null;
+    }
+  },
   SAVE_QR_IMAGE: async (evt, { dataUrl, exportBaseName, uploadToDrive: uploadToDriveFlag = false }) => {
     try {
       if (!dataUrl || !exportBaseName) {

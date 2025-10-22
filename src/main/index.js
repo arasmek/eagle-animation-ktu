@@ -1,6 +1,7 @@
 import 'source-map-support/register';
 
-import { join } from 'node:path';
+import { join, extname } from 'node:path';
+import fs from 'node:fs';
 
 import { electronApp, is, optimizer } from '@electron-toolkit/utils';
 import { app, BrowserWindow, ipcMain, net, protocol, shell } from 'electron';
@@ -12,7 +13,10 @@ import { PROJECTS_PATH } from './config';
 
 let sendToRenderer = () => null;
 
-protocol.registerSchemesAsPrivileged([{ scheme: 'ea-data', privileges: { bypassCSP: true, standard: true, secure: true, supportFetchAPI: true } }]);
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'ea-data', privileges: { bypassCSP: true, standard: true, secure: true, supportFetchAPI: true } },
+  { scheme: 'ea-resource', privileges: { bypassCSP: true, standard: true, secure: true, supportFetchAPI: true } },
+]);
 
 function createWindow() {
   // Create the browser window.
@@ -70,6 +74,89 @@ app.whenReady().then(() => {
     const relativePath = request.url.slice('ea-data://'.length);
     const diskPath = `${PROJECTS_PATH}/${relativePath}`;
     return net.fetch(url.pathToFileURL(diskPath).toString());
+  });
+
+  // Serve packaged/static resources (dev: repo/resources, prod: process.resourcesPath)
+  protocol.handle('ea-resource', (request) => {
+    const relativePath = request.url.slice('ea-resource://'.length);
+    const base = app?.isPackaged ? process.resourcesPath : join(process.cwd(), 'resources');
+    const abs = join(base, relativePath);
+
+    // Simple content-type mapping
+    const mime = (() => {
+      const ext = extname(abs).toLowerCase();
+      switch (ext) {
+        case '.mp4':
+          return 'video/mp4';
+        case '.webm':
+          return 'video/webm';
+        case '.mp3':
+          return 'audio/mpeg';
+        case '.wav':
+          return 'audio/wav';
+        case '.png':
+          return 'image/png';
+        case '.jpg':
+        case '.jpeg':
+          return 'image/jpeg';
+        case '.gif':
+          return 'image/gif';
+        default:
+          return 'application/octet-stream';
+      }
+    })();
+
+    try {
+      const stat = fs.statSync(abs);
+      const size = stat.size;
+      const rangeHeader = request.headers.get('range');
+
+      if (rangeHeader) {
+        // Parse Range: bytes=start-end
+        const m = /bytes=([0-9]*)-([0-9]*)/.exec(rangeHeader);
+        let start = 0;
+        let end = size - 1;
+        if (m) {
+          if (m[1] !== '') start = parseInt(m[1], 10);
+          if (m[2] !== '') end = parseInt(m[2], 10);
+        }
+        if (start > end || start >= size) {
+          // Invalid range; respond with 416
+          return new Response(null, {
+            status: 416,
+            headers: {
+              'Content-Range': `bytes */${size}`,
+            },
+          });
+        }
+
+        const chunkSize = end - start + 1;
+        const stream = fs.createReadStream(abs, { start, end });
+        return new Response(stream, {
+          status: 206,
+          headers: {
+            'Content-Type': mime,
+            'Content-Length': `${chunkSize}`,
+            'Accept-Ranges': 'bytes',
+            'Content-Range': `bytes ${start}-${end}/${size}`,
+          },
+        });
+      }
+
+      // No range; return full file
+      const stream = fs.createReadStream(abs);
+      return new Response(stream, {
+        status: 200,
+        headers: {
+          'Content-Type': mime,
+          'Content-Length': `${size}`,
+          'Accept-Ranges': 'bytes',
+        },
+      });
+    } catch (err) {
+      console.error('[ea-resource] Failed to serve', abs, err);
+      return new Response(null, { status: 404 });
+    }
   });
 
   createWindow();

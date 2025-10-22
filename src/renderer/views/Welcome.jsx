@@ -19,11 +19,24 @@ const WelcomeView = ({ t }) => {
   const nameInputRef = useRef(null);
   const { actions } = useSettings();
   const { i18n } = useTranslation();
+  const [videoSrc, setVideoSrc] = useState(null);
 
   useEffect(() => {
     if (nameInputRef.current) {
       nameInputRef.current.focus();
     }
+  }, []);
+
+  // Load welcome video from resources/videos/ad.mp4 (dev + packaged)
+  useEffect(() => {
+    (async () => {
+      try {
+        const url = await window.EA('GET_RESOURCE_FILE_URL', { rel: 'videos/ad.mp4' });
+        setVideoSrc(url || null);
+      } catch (e) {
+        setVideoSrc(null);
+      }
+    })();
   }, []);
 
   const toggleLanguage = () => {
@@ -54,7 +67,14 @@ const WelcomeView = ({ t }) => {
         <Logo />
       </HeaderBar>
       <PageContent>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '70vh' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '70vh', gap: '16px' }}>
+          {videoSrc && (
+            <div style={{ width: '640px', maxWidth: '100%', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 6px 24px rgba(0,0,0,0.35)' }}>
+              <video autoPlay loop muted playsInline controls={false} style={{ width: '100%', display: 'block' }}>
+                <source src={videoSrc} type="video/mp4" />
+              </video>
+            </div>
+          )}
           <h2 style={{ color: 'var(--color-white)', fontWeight: 600, fontSize: '2rem', marginBottom: '24px' }}>{t ? t('Enter your name to begin') : 'Enter your name to begin'}</h2>
           <input
             ref={nameInputRef}
