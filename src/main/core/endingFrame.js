@@ -3,14 +3,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { app } from 'electron';
 
-// Register Inter font from packaged or local resources if available
+// Register KTU Sans font from packaged or local resources if available
 (() => {
   const resourcesBase = app?.isPackaged ? process.resourcesPath : path.join(process.cwd(), 'resources');
   const candidates = [
-    path.join(resourcesBase, 'fonts', 'Inter-Bold.otf'),
-    path.join(resourcesBase, 'Inter-Bold.otf'),
-    path.join(process.cwd(), 'resources', 'fonts', 'Inter-Bold.otf'),
-    path.join(process.cwd(), 'Inter-Bold.otf'),
+    path.join(resourcesBase, 'fonts', 'KTU-Sans.otf'),
+    path.join(resourcesBase, 'KTU-Sans.otf'),
+    path.join(process.cwd(), 'resources', 'fonts', 'KTU-Sans.otf'),
+    path.join(process.cwd(), 'KTU-Sans.otf'),
   ];
   const fontPath = candidates.find((p) => {
     try {
@@ -20,7 +20,7 @@ import { app } from 'electron';
     }
   });
   if (fontPath) {
-    registerFont(fontPath, { family: 'Inter' });
+    registerFont(fontPath, { family: 'KTU Sans' });
   }
 })();
 
@@ -51,7 +51,7 @@ export async function createEndingFrame({ text, width, height, color = '#fff' })
   //ctx.fillText('Animacijos autorius:', width / 2, y);
 
   // Line 2: Name (bigger font, +30px = 78px)
-  ctx.font = 'bold 104px Inter';
+  ctx.font = 'bold 104px "KTU Sans"';
   const nameX = 105;
   const nameY = 525;
   ctx.fillText(text, nameX, nameY);
@@ -61,7 +61,7 @@ export async function createEndingFrame({ text, width, height, color = '#fff' })
 
   // Line 3: © YEAR
   const year = new Date().getFullYear();
-  ctx.font = 'bold 49px Inter';
+  ctx.font = 'bold 49px "KTU Sans"';
   ctx.fillText(`© ${year}`, nameX, yearY);
 /*
   // Logo at bottom
