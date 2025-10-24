@@ -63,6 +63,35 @@ const actions = {
       return null;
     }
   },
+  GET_AUDIO_TRACK: async (evt, { name } = {}) => {
+    if (!name || name === 'none') {
+      return { path: null };
+    }
+    try {
+      const { access } = await import('node:fs/promises');
+      const path = await import('node:path');
+      const { homedir } = await import('node:os');
+      const { pathToFileURL } = await import('node:url');
+      const base = app?.isPackaged ? process.resourcesPath : path.join(process.cwd(), 'resources');
+      const candidates = [
+        { location: path.join(homedir(), 'Desktop', 'audio', name), type: 'file' },
+        { location: path.join(base, 'audio', name), type: 'resource' },
+      ];
+      for (const { location, type } of candidates) {
+        try {
+          await access(location);
+          if (type === 'resource') {
+            const rel = path.relative(base, location).replace(/\\/g, '/');
+            return { path: `ea-resource://${rel}` };
+          }
+          return { path: pathToFileURL(location).toString() };
+        } catch (_) {}
+      }
+    } catch (error) {
+      console.warn('[AUDIO] Failed to resolve preview track', { name, error: error?.message });
+    }
+    return { path: null };
+  },
   SAVE_QR_IMAGE: async (evt, { dataUrl, exportBaseName, uploadToDrive: uploadToDriveFlag = false }) => {
     try {
       if (!dataUrl || !exportBaseName) {
