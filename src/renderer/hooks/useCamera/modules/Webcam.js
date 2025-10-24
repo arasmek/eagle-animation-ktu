@@ -388,7 +388,22 @@ class Webcam {
     }
 
     if (typeof ImageCapture !== 'undefined') {
-      const imageCapture = new ImageCapture(this.stream.getVideoTracks()[0]);
+      const track = this.stream.getVideoTracks()[0];
+      const imageCapture = new ImageCapture(track);
+
+      const bitmap = await imageCapture.grabFrame().catch(() => null);
+      if (bitmap) {
+        const canvas = document.createElement('canvas');
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        const context = canvas.getContext('2d', { alpha: false });
+        context.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height);
+        if (typeof bitmap.close === 'function') {
+          bitmap.close();
+        }
+        return { type: 'image/png', buffer: canvas };
+      }
+
       const arrBuffer = await imageCapture
         .takePhoto({})
         .then((blob) => blob.arrayBuffer())
@@ -397,25 +412,14 @@ class Webcam {
       if (arrBuffer) {
         return { type: 'image/png', buffer: arrBuffer };
       }
-
-      const bitmap = await imageCapture.grabFrame({}).catch(() => null);
-      if (!bitmap) {
-        return;
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width = bitmap.width;
-      canvas.height = bitmap.height;
-      const context = canvas.getContext('2d', { alpha: false });
-      context.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height);
-      return { type: 'image/png', buffer: canvas };
-    } else {
-      const canvas = document.createElement('canvas');
-      canvas.width = this.video.videoWidth;
-      canvas.height = this.video.videoHeight;
-      const context = canvas.getContext('2d', { alpha: false });
-      context.drawImage(this.video, 0, 0, canvas.width, canvas.height);
-      return { type: 'image/png', buffer: canvas };
     }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = this.video.videoWidth;
+    canvas.height = this.video.videoHeight;
+    const context = canvas.getContext('2d', { alpha: false });
+    context.drawImage(this.video, 0, 0, canvas.width, canvas.height);
+    return { type: 'image/png', buffer: canvas };
   }
 
   async disconnect() {
