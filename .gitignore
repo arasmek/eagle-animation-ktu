@@ -38,3 +38,5 @@ generate_drive_token.js
 client_secret_*.json
 token.json
 credentials.json
+resources/videos/tutorial.mp4
+resources/videos/ad.mp4

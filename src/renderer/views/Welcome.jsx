@@ -19,25 +19,58 @@ const WelcomeView = ({ t }) => {
   const nameInputRef = useRef(null);
   const { actions } = useSettings();
   const { i18n } = useTranslation();
-  const [videoSrc, setVideoSrc] = useState(null);
+
+  const [adVideoSrc, setAdVideoSrc] = useState(null);
+  const [tutorialVideoSrc, setTutorialVideoSrc] = useState(null);
+  const [overlayVisible, setOverlayVisible] = useState(false);
+  const [currentVideo, setCurrentVideo] = useState(null);
+  const overlayVideoRef = useRef(null);
 
   useEffect(() => {
-    if (nameInputRef.current) {
-      nameInputRef.current.focus();
-    }
+    if (nameInputRef.current) nameInputRef.current.focus();
   }, []);
 
-  // Load welcome video from resources/videos/ad.mp4 (dev + packaged)
+  // Load both videos from /resources/videos/
   useEffect(() => {
     (async () => {
       try {
-        const url = await window.EA('GET_RESOURCE_FILE_URL', { rel: 'videos/ad.mp4' });
-        setVideoSrc(url || null);
+        const ad = await window.EA('GET_RESOURCE_FILE_URL', { rel: 'videos/ad.mp4' });
+        const tutorial = await window.EA('GET_RESOURCE_FILE_URL', { rel: 'videos/tutorial.mp4' });
+        setAdVideoSrc(ad || null);
+        setTutorialVideoSrc(tutorial || null);
       } catch (e) {
-        setVideoSrc(null);
+        console.error('Video load failed', e);
       }
     })();
   }, []);
+
+  const openVideo = (src) => {
+    if (!src) return;
+    setCurrentVideo(src);
+    setOverlayVisible(true);
+    setTimeout(() => {
+      try {
+        if (overlayVideoRef.current) {
+          overlayVideoRef.current.src = src;
+          overlayVideoRef.current.currentTime = 0;
+          overlayVideoRef.current.muted = false;
+          overlayVideoRef.current.play().catch(() => {});
+        }
+      } catch {}
+    }, 100);
+  };
+
+  const closeOverlay = () => {
+    try {
+      if (overlayVideoRef.current) {
+        overlayVideoRef.current.pause();
+        overlayVideoRef.current.removeAttribute('src');
+        overlayVideoRef.current.load();
+      }
+    } catch {}
+    setOverlayVisible(false);
+    setCurrentVideo(null);
+  };
 
   const toggleLanguage = () => {
     const newLang = i18n.language === 'en' ? 'lt' : 'en';
@@ -54,75 +87,148 @@ const WelcomeView = ({ t }) => {
     window.track && window.track('project_created', { projectId: project.id });
   };
 
-  // Handle Enter key
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      handleBegin();
-    }
+    if (e.key === 'Enter') handleBegin();
   };
 
   return (
-    <PageLayout>
-      <HeaderBar withBorder>
-        <Logo />
-      </HeaderBar>
-      <PageContent>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '70vh', gap: '16px' }}>
-          {videoSrc && (
-            <div style={{ width: '640px', maxWidth: '100%', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 6px 24px rgba(0,0,0,0.35)' }}>
-              <video autoPlay loop muted playsInline controls={false} style={{ width: '100%', display: 'block' }}>
-                <source src={videoSrc} type="video/mp4" />
-              </video>
-            </div>
-          )}
-          <h2 style={{ color: 'var(--color-white)', fontWeight: 600, fontSize: '2rem', marginBottom: '24px' }}>{t ? t('Enter your name to begin') : 'Enter your name to begin'}</h2>
-          <input
-            ref={nameInputRef}
-            type="text"
-            value={userName}
-            onChange={(e) => {
-              setUserName(e.target.value);
-              setError('');
-            }}
-            onKeyDown={handleKeyDown} // <- listen for Enter
-            placeholder={t ? t('Your name') : 'Your name'}
+    <>
+      <PageLayout>
+        <HeaderBar withBorder>
+          <Logo />
+        </HeaderBar>
+
+        <PageContent>
+          <div
             style={{
-              padding: '8px',
-              fontSize: '1rem',
-              marginBottom: '12px',
-              width: '240px',
-              textAlign: 'center',
-              borderRadius: '8px',
-              border: '1px solid var(--color-theme-light)',
-              background: 'var(--color-theme-extra-dark)',
-              color: 'var(--color-white)',
-            }}
-          />
-          {error && <div style={{ color: 'var(--color-alert)', marginBottom: '8px' }}>{error}</div>}
-          <Button onClick={handleBegin} style={{ marginTop: '8px' }} icon={Camera} />
-          <button
-            onClick={toggleLanguage}
-            style={{
-              marginTop: '24px',
-              padding: '6px 12px',
-              fontSize: '0.9rem',
-              borderRadius: '8px',
-              border: '1px solid var(--color-theme-light)',
-              background: 'var(--color-theme-extra-dark)',
-              color: 'var(--color-white)',
-              cursor: 'pointer',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '70vh',
+              gap: '16px',
             }}
           >
-            {i18n.language === 'en' ? 'LIETUVIŲ' : 'ENGLISH'}
-          </button>
-          <div style={{ marginTop: '32px', fontSize: '0.9rem', color: '#888' }}>
-            <Link to="/home" style={{ textDecoration: 'underline', color: '#888' }}>
-              {t ? t('Old home') : 'Old home'}
-            </Link>
+            {/* Buttons to open videos */}
+            {adVideoSrc && (
+              <button
+                onClick={() => openVideo(adVideoSrc)}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--color-theme-light)',
+                  background: 'var(--color-theme-extra-dark)',
+                  color: 'var(--color-white)',
+                  cursor: 'pointer',
+                }}
+              >
+                {t ? t('Watch Intro Video') : 'Watch Intro Video'}
+              </button>
+            )}
+            {tutorialVideoSrc && (
+              <button
+                onClick={() => openVideo(tutorialVideoSrc)}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--color-theme-light)',
+                  background: 'var(--color-theme-extra-dark)',
+                  color: 'var(--color-white)',
+                  cursor: 'pointer',
+                }}
+              >
+                {t ? t('Watch Tutorial') : 'Watch Tutorial'}
+              </button>
+            )}
+
+            <h2
+              style={{
+                color: 'var(--color-white)',
+                fontWeight: 600,
+                fontSize: '2rem',
+                marginBottom: '24px',
+              }}
+            >
+              {t ? t('Enter your name to begin') : 'Enter your name to begin'}
+            </h2>
+
+            <input
+              ref={nameInputRef}
+              type="text"
+              value={userName}
+              onChange={(e) => {
+                setUserName(e.target.value);
+                setError('');
+              }}
+              onKeyDown={handleKeyDown}
+              placeholder={t ? t('Your name') : 'Your name'}
+              style={{
+                padding: '8px',
+                fontSize: '1rem',
+                marginBottom: '12px',
+                width: '240px',
+                textAlign: 'center',
+                borderRadius: '8px',
+                border: '1px solid var(--color-theme-light)',
+                background: 'var(--color-theme-extra-dark)',
+                color: 'var(--color-white)',
+              }}
+            />
+
+            {error && (
+              <div style={{ color: 'var(--color-alert)', marginBottom: '8px' }}>{error}</div>
+            )}
+
+            <Button onClick={handleBegin} style={{ marginTop: '8px' }} icon={Camera} />
+
+            <button
+              onClick={toggleLanguage}
+              style={{
+                marginTop: '24px',
+                padding: '6px 12px',
+                fontSize: '0.9rem',
+                borderRadius: '8px',
+                border: '1px solid var(--color-theme-light)',
+                background: 'var(--color-theme-extra-dark)',
+                color: 'var(--color-white)',
+                cursor: 'pointer',
+              }}
+            >
+              {i18n.language === 'en' ? 'LIETUVIŲ' : 'ENGLISH'}
+            </button>
+
+            <div style={{ marginTop: '32px', fontSize: '0.9rem', color: '#888' }}>
+              <Link to="/home" style={{ textDecoration: 'underline', color: '#888' }}>
+                {t ? t('Old home') : 'Old home'}
+              </Link>
+            </div>
           </div>
-        </div>
-      </PageContent>
-    </PageLayout>
+        </PageContent>
+      </PageLayout>
+
+      {/* Fullscreen overlay for video playback */}
+      <div
+        onClick={closeOverlay}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.95)',
+          display: overlayVisible ? 'flex' : 'none',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          cursor: 'pointer',
+        }}
+      >
+        <video
+          ref={overlayVideoRef}
+          playsInline
+          loop
+          controls={false}
+          style={{ width: '100%', height: '100%', outline: 'none' }}
+        />
+      </div>
+    </>
   );
 };
 
