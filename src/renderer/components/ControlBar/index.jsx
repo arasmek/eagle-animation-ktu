@@ -13,11 +13,13 @@ import faImageEye from '@icons/faImageEye';
 import faImageEyeSlash from '@icons/faImageEyeSlash';
 import faImageSlash from '@icons/faImageSlash';
 import faPlay from '@icons/faPlay';
-import faSliders from '@icons/faSliders';
 import faStop from '@icons/faStop';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { withTranslation } from 'react-i18next';
 
 import * as style from './style.module.css';
+
+const HOLD_DURATION_MS = 1000;
 
 const ControlBar = ({
   gridStatus = false,
@@ -33,20 +35,98 @@ const ControlBar = ({
   frameQuantity = 0,
   canDeduplicate = false,
   isCurrentFrameHidden = false,
-  showCameraSettings = false,
   gridModes = [],
   onAction = null,
   totalAnimationFrames = 0,
   t,
 }) => {
-  const handleAction = (action, args) => () => {
-    if (onAction) {
-      onAction(action, args);
+  const handleAction = useCallback(
+    (action, args) => () => {
+      if (onAction) {
+        onAction(action, args);
+      }
+    },
+    [onAction],
+  );
+
+  const [isCameraHoldActive, setIsCameraHoldActive] = useState(false);
+  const holdTimerRef = useRef(null);
+  const holdTriggeredRef = useRef(false);
+
+  const cancelHold = useCallback(() => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
     }
+    if (!holdTriggeredRef.current) {
+      setIsCameraHoldActive(false);
+    }
+    holdTriggeredRef.current = false;
+  }, []);
+
+  const startHold = useCallback(() => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+    }
+    holdTriggeredRef.current = false;
+    setIsCameraHoldActive(true);
+    holdTimerRef.current = window.setTimeout(() => {
+      holdTimerRef.current = null;
+      holdTriggeredRef.current = true;
+      setIsCameraHoldActive(false);
+      handleAction('CAMERA_SETTINGS')();
+    }, HOLD_DURATION_MS);
+  }, [handleAction]);
+
+  useEffect(() => cancelHold, [cancelHold]);
+
+  const handleCameraHoldPointerDown = (event) => {
+    event.preventDefault();
+    startHold();
+  };
+
+  const handleCameraHoldPointerCancel = (event) => {
+    event.preventDefault();
+    cancelHold();
+  };
+
+  const handleCameraHoldKeyDown = (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+    if (event.repeat) {
+      return;
+    }
+    event.preventDefault();
+    startHold();
+  };
+
+  const handleCameraHoldKeyUp = (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+    event.preventDefault();
+    cancelHold();
   };
 
   return (
     <div className={style.container}>
+      <div
+        className={`${style.hiddenHoldArea} ${isCameraHoldActive ? style.hiddenHoldAreaActive : ''}`}
+        role="button"
+        tabIndex={0}
+        aria-label={t('Hold to open camera settings')}
+        onPointerDown={handleCameraHoldPointerDown}
+        onPointerUp={handleCameraHoldPointerCancel}
+        onPointerLeave={handleCameraHoldPointerCancel}
+        onPointerCancel={handleCameraHoldPointerCancel}
+        onPointerOut={handleCameraHoldPointerCancel}
+        onKeyDown={handleCameraHoldKeyDown}
+        onKeyUp={handleCameraHoldKeyUp}
+        onContextMenu={(event) => event.preventDefault()}
+      >
+        <span className={style.hiddenHoldPulse} />
+      </div>
       <div className={`${style.group} ${style.toolsGroup}`}>
         <div className={style.sliderGroup}>
           <span className={style.sliderLabel}>{t('Onion blending')}</span>
@@ -75,7 +155,6 @@ const ControlBar = ({
         {(gridModes.includes('GRID') || gridModes.includes('CENTER') || gridModes.includes('MARGINS')) && (
           <Button title={gridStatus ? t('Disable grid') : t('Enable grid')} label={gridStatus ? t('Disable grid') : t('Enable grid')} selected={gridStatus} onClick={handleAction('GRID')} icon={faFrame} />
         )}
-        <Button title={t('Camera settings')} label={t('Camera settings')} selected={showCameraSettings} onClick={handleAction('CAMERA_SETTINGS')} icon={faSliders} />
       </div>
       <div className={`${style.group} ${style.captureGroup}`}>
         <Button
