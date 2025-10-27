@@ -50,3 +50,43 @@
 .right {
     justify-content: flex-end;
 }
+
+.hiddenHoldArea {
+    align-items: center;
+    display: flex;
+    flex: 0 0 48px;
+    height: 48px;
+    justify-content: center;
+    margin-right: calc(var(--space-small) / 2);
+    opacity: 0;
+    outline: none;
+    position: relative;
+    touch-action: none;
+    user-select: none;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.hiddenHoldAreaActive {
+    opacity: 0.25;
+}
+
+.hiddenHoldArea:focus-visible {
+    opacity: 0.35;
+    outline: 2px solid var(--color-primary);
+    outline-offset: 4px;
+}
+
+.hiddenHoldPulse {
+    background: var(--color-primary);
+    border-radius: 999px;
+    height: 28px;
+    opacity: 0.45;
+    transform: scale(0.4);
+    transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out;
+    width: 28px;
+}
+
+.hiddenHoldAreaActive .hiddenHoldPulse {
+    opacity: 0.7;
+    transform: scale(1);
+}
