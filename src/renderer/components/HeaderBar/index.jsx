@@ -31,13 +31,13 @@ const ActionButton = withTranslation()(({ type, tooltipPosition = 'LEFT', onClic
     EXIT_FULLSCREEN: faDownLeftAndUpRightToCenter,
   };
 
-  return <Button label={titles?.[type] || null} onClick={onClick} icon={icons?.[type] || null} tooltipPosition={tooltipPosition} />;
+  return <Button title={titles?.[type] || null} onClick={onClick} icon={icons?.[type] || null} tooltipPosition={tooltipPosition} />;
 });
 
 const HeaderBar = ({ onAction = null, leftActions = [], rightActions = [], children = null, leftChildren = null, rightChildren = null, title = '', withBorder = false }) => {
   return (
     <div className={`${style.headerBar} ${withBorder && style.withBorder}`}>
-      <div>
+      <div className={`${style.side} ${style.left}`}>
         {leftActions.map((type) => (
           <ActionButton type={type} key={type} onClick={() => onAction(type)} tooltipPosition="NONE" />
         ))}
@@ -49,7 +49,7 @@ const HeaderBar = ({ onAction = null, leftActions = [], rightActions = [], child
           {!children && title && <div className={style.title}>{title}</div>}
         </div>
       )}
-      <div>
+      <div className={`${style.side} ${style.right}`}>
         {rightChildren}
         {rightActions.map((type) => (
           <ActionButton type={type} key={type} onClick={() => onAction(type)} tooltipPosition="NONE" />

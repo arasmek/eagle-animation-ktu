@@ -3,10 +3,12 @@
     background: var(--color-theme-extra-dark);
     box-sizing: border-box;
     display: flex;
-    height: 62px;
+    flex-wrap: wrap;
+    gap: var(--space-small);
     justify-content: space-between;
-    min-height: 62px;
-    padding: 0 5px;
+    min-height: 94px;
+    padding: var(--space-small) var(--space-medium);
+    position: relative;
     text-align: center;
     width: 100%;
     z-index: 2;
@@ -27,5 +29,24 @@
 .center {
     left: 50%;
     position: absolute;
-    transform: translateX(-50%);
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.side {
+    align-items: center;
+    column-gap: var(--space-small);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    row-gap: var(--space-small);
+    width: fit-content;
+}
+
+.left {
+    justify-content: flex-start;
+}
+
+.right {
+    justify-content: flex-end;
 }

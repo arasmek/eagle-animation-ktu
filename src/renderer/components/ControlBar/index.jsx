@@ -1,6 +1,5 @@
 import Button from '@components/Button';
 import CustomSlider from '@components/CustomSlider';
-import NumberInput from '@components/NumberInput';
 import PreviewIndicator from '@components/PreviewIndicator';
 import Tooltip from '@components/Tooltip';
 import faArrowsRepeat from '@icons/faArrowsRepeat';
@@ -16,8 +15,6 @@ import faImageSlash from '@icons/faImageSlash';
 import faPlay from '@icons/faPlay';
 import faSliders from '@icons/faSliders';
 import faStop from '@icons/faStop';
-import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
 import { withTranslation } from 'react-i18next';
 
 import * as style from './style.module.css';
@@ -42,65 +39,68 @@ const ControlBar = ({
   totalAnimationFrames = 0,
   t,
 }) => {
-  const form = useForm({
-    mode: 'all',
-    defaultValues: {
-      fps,
-    },
-  });
-  const { watch, register, getValues, setValue } = form;
-  const formValues = watch();
-
   const handleAction = (action, args) => () => {
     if (onAction) {
       onAction(action, args);
     }
   };
 
-  useEffect(() => {
-    const values = getValues();
-    handleAction('FPS_CHANGE', values.fps)();
-  }, [JSON.stringify(formValues)]);
-
-  useEffect(() => {
-    setValue('fps', fps);
-  }, [fps]);
-
   return (
     <div className={style.container}>
-      <div className={`${style.subcontainer} ${style.left}`}>
-        {!isPlaying && framePosition !== false && (
-          <Button title={isCurrentFrameHidden ? t('Unhide frame') : t('Hide frame')} onClick={handleAction('HIDE_FRAME')} icon={isCurrentFrameHidden ? faImageEye : faImageEyeSlash} />
-        )}
-        {!isPlaying && framePosition !== false && canDeduplicate && <Button title={t('Deduplicate frame')} onClick={handleAction('DEDUPLICATE')} icon={faImageCircleMinus} />}
-        {!isPlaying && framePosition !== false && <Button title={t('Duplicate frame')} onClick={handleAction('DUPLICATE')} icon={faImageCirclePlus} />}
-        {!isPlaying && framePosition !== false && <Button title={t('Remove frame')} onClick={handleAction('DELETE_FRAME')} icon={faImageSlash} />}
-
-        <Button style={{ marginLeft: 'var(--space-big)' }} title={t('Difference')} selected={differenceStatus} onClick={handleAction('DIFFERENCE')} icon={faDiamondHalfStroke} />
-        {(gridModes.includes('GRID') || gridModes.includes('CENTER') || gridModes.includes('MARGINS')) && (
-          <Button title={gridStatus ? t('Disable grid') : t('Enable grid')} selected={gridStatus} onClick={handleAction('GRID')} icon={faFrame} />
-        )}
-
-        <div className={`${style.slider} ${differenceStatus ? style.sliderDisabled : ''}`} id="onion" data-tooltip-content={t('Onion blending')}>
-          <CustomSlider step={0.01} min={0} max={1} value={onionValue} onChange={differenceStatus ? () => {} : (value) => handleAction('ONION_CHANGE', value)()} />
+      <div className={`${style.group} ${style.toolsGroup}`}>
+        <div className={style.sliderGroup}>
+          <span className={style.sliderLabel}>{t('Onion blending')}</span>
+          <div className={`${style.slider} ${differenceStatus ? style.sliderDisabled : ''}`} id="onion" data-tooltip-content={t('Onion blending')}>
+            <CustomSlider step={0.01} min={0} max={1} value={onionValue} onChange={differenceStatus ? () => {} : (value) => handleAction('ONION_CHANGE', value)()} />
+          </div>
         </div>
-        <Button style={{ marginLeft: 'var(--space-big)' }} title={t('Camera settings')} selected={showCameraSettings} onClick={handleAction('CAMERA_SETTINGS')} icon={faSliders} />
+        {!isPlaying && framePosition !== false && (
+          <Button
+            title={isCurrentFrameHidden ? t('Unhide frame') : t('Hide frame')}
+            label={isCurrentFrameHidden ? t('Unhide frame') : t('Hide frame')}
+            onClick={handleAction('HIDE_FRAME')}
+            icon={isCurrentFrameHidden ? faImageEye : faImageEyeSlash}
+          />
+        )}
+        {!isPlaying && framePosition !== false && canDeduplicate && (
+          <Button title={t('Deduplicate frame')} label={t('Deduplicate frame')} onClick={handleAction('DEDUPLICATE')} icon={faImageCircleMinus} />
+        )}
+        {!isPlaying && framePosition !== false && (
+          <Button title={t('Duplicate frame')} label={t('Duplicate frame')} onClick={handleAction('DUPLICATE')} icon={faImageCirclePlus} />
+        )}
+        {!isPlaying && framePosition !== false && (
+          <Button title={t('Remove frame')} label={t('Remove frame')} onClick={handleAction('DELETE_FRAME')} icon={faImageSlash} />
+        )}
+        <Button title={t('Difference')} label={t('Difference')} selected={differenceStatus} onClick={handleAction('DIFFERENCE')} icon={faDiamondHalfStroke} />
+        {(gridModes.includes('GRID') || gridModes.includes('CENTER') || gridModes.includes('MARGINS')) && (
+          <Button title={gridStatus ? t('Disable grid') : t('Enable grid')} label={gridStatus ? t('Disable grid') : t('Enable grid')} selected={gridStatus} onClick={handleAction('GRID')} icon={faFrame} />
+        )}
+        <Button title={t('Camera settings')} label={t('Camera settings')} selected={showCameraSettings} onClick={handleAction('CAMERA_SETTINGS')} icon={faSliders} />
       </div>
-      <Button disabled={isTakingPicture || !isCameraReady} onClick={handleAction('TAKE_PICTURE')} color="primary" icon={faCamera} title={t('Take a picture')} />
-      <div className={`${style.subcontainer} ${style.right}`}>
-        <PreviewIndicator framePosition={framePosition} frameQuantity={frameQuantity} animationFrameQuantity={totalAnimationFrames} fps={fps} />
-        <Button selectedColor="warning" title={!isPlaying ? t('Play') : t('Stop')} selected={isPlaying} onClick={handleAction('PLAY')} icon={isPlaying ? faStop : faPlay} />
-        <Button title={t('Loop')} onClick={handleAction('LOOP')} selected={loopStatus} icon={faArrowsRepeat} />
-        <Button title={t('Short play')} onClick={handleAction('SHORT_PLAY')} selected={shortPlayStatus} icon={faForwardFast} />
-        <NumberInput
-          onBlur={() => handleAction('FPS_BLUR')()}
-          onFocus={() => handleAction('FPS_FOCUS')()}
-          style={{ marginLeft: 'var(--space-big)' }}
-          min={1}
-          max={60}
-          tag={t('FPS')}
-          register={register('fps')}
+      <div className={`${style.group} ${style.captureGroup}`}>
+        <Button
+          disabled={isTakingPicture || !isCameraReady}
+          onClick={handleAction('TAKE_PICTURE')}
+          color="primary"
+          icon={faCamera}
+          title={t('Take a picture')}
+          label={t('Take a picture')}
         />
+      </div>
+      <div className={`${style.group} ${style.playbackGroup}`}>
+        <div className={style.previewWrapper}>
+          <PreviewIndicator framePosition={framePosition} frameQuantity={frameQuantity} animationFrameQuantity={totalAnimationFrames} fps={fps} />
+        </div>
+        <Button
+          selectedColor="warning"
+          title={!isPlaying ? t('Play') : t('Stop')}
+          label={!isPlaying ? t('Play') : t('Stop')}
+          selected={isPlaying}
+          onClick={handleAction('PLAY')}
+          icon={isPlaying ? faStop : faPlay}
+        />
+        <Button title={t('Loop')} label={t('Loop')} onClick={handleAction('LOOP')} selected={loopStatus} icon={faArrowsRepeat} />
+        <Button title={t('Short play')} label={t('Short play')} onClick={handleAction('SHORT_PLAY')} selected={shortPlayStatus} icon={faForwardFast} />
         <Tooltip anchorId="onion" />
         <Tooltip anchorId={`preview-indicator`} />
       </div>
