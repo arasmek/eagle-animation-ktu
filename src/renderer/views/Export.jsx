@@ -12,7 +12,7 @@ import { parseRatio } from '@core/ratio';
 import { GetFrameResolutions } from '@core/ResolutionsCache';
 import useProject from '@hooks/useProject';
 import useSettings from '@hooks/useSettings';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { withTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -32,14 +32,18 @@ const Export = ({ t }) => {
   const [driveLink, setDriveLink] = useState(null);
   const [exportBaseName, setExportBaseName] = useState(null);
   const [audioTracks, setAudioTracks] = useState([]);
+  const audioPreviewRef = useRef(null);
+  const audioPreviewTimerRef = useRef(null);
+  const audioPreviewVolumeRef = useRef(0.7);
 
-  const { register, handleSubmit } = useForm({
+  const { register, handleSubmit, watch } = useForm({
     mode: 'all',
     defaultValues: { backgroundSound: 'none' },
   });
 
   const projectRatio = parseRatio(project?.scenes?.[Number(track)]?.ratio)?.value || null;
   const framesKey = JSON.stringify(project?.scenes?.[Number(track)]?.pictures);
+  const selectedBackgroundSound = watch('backgroundSound');
 
   useEffect(() => {
     GetFrameResolutions(id, Number(track), project?.scenes?.[Number(track)]?.pictures)
@@ -72,6 +76,113 @@ const Export = ({ t }) => {
       disposed = true;
     };
   }, []);
+
+  useEffect(() => {
+    const stopPreview = () => {
+      if (audioPreviewTimerRef.current) {
+        clearTimeout(audioPreviewTimerRef.current);
+        audioPreviewTimerRef.current = null;
+      }
+      if (audioPreviewRef.current) {
+        const audio = audioPreviewRef.current;
+        audioPreviewRef.current = null;
+        try {
+          audio.pause();
+          audio.currentTime = 0;
+          audio.src = '';
+          audio.load();
+        } catch (_) {}
+        audio.volume = audioPreviewVolumeRef.current ?? 0.7;
+      }
+    };
+
+    stopPreview();
+
+    if (!selectedBackgroundSound || selectedBackgroundSound === 'none' || typeof window === 'undefined' || typeof window.EA !== 'function') {
+      return stopPreview;
+    }
+
+    let disposed = false;
+
+    (async () => {
+      try {
+        const response = await window.EA('GET_AUDIO_TRACK', { name: selectedBackgroundSound });
+        if (disposed || !response?.path) {
+          return;
+        }
+
+        const audio = new Audio();
+        audio.src = response.path;
+        audio.preload = 'auto';
+        audio.volume = 0.7;
+        audioPreviewVolumeRef.current = audio.volume;
+        audioPreviewRef.current = audio;
+
+        const attemptPlay = () => {
+          const playPromise = audio.play();
+          if (playPromise && typeof playPromise.then === 'function') {
+            playPromise.catch(() => {});
+          }
+        };
+
+        if (audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+          attemptPlay();
+        } else {
+          audio.addEventListener('canplay', attemptPlay, { once: true });
+          audio.load();
+        }
+
+        audio.addEventListener(
+          'error',
+          () => {
+            if (audioPreviewRef.current === audio) {
+              audioPreviewRef.current = null;
+            }
+          },
+          { once: true },
+        );
+
+        audioPreviewTimerRef.current = setTimeout(() => {
+          if (audioPreviewRef.current === audio) {
+            const fadeDuration = 600;
+            const fadeSteps = 12;
+            const initialVolume = audio.volume;
+            let currentStep = 0;
+
+            const fadeInterval = setInterval(() => {
+              currentStep += 1;
+              const ratio = Math.max(0, 1 - currentStep / fadeSteps);
+              audio.volume = initialVolume * ratio;
+              if (currentStep >= fadeSteps || audioPreviewRef.current !== audio) {
+                clearInterval(fadeInterval);
+                try {
+                  audio.pause();
+                  audio.currentTime = 0;
+                  audio.volume = initialVolume;
+                } catch (_) {}
+                try {
+                  audio.src = '';
+                  audio.load();
+                } catch (_) {}
+                if (audioPreviewRef.current === audio) {
+                  audioPreviewRef.current = null;
+                }
+              }
+            }, fadeDuration / fadeSteps);
+          }
+          audioPreviewTimerRef.current = null;
+        }, 3500);
+      } catch (err) {
+        console.warn('[Export] Failed to preview audio track', err);
+        stopPreview();
+      }
+    })();
+
+    return () => {
+      disposed = true;
+      stopPreview();
+    };
+  }, [selectedBackgroundSound]);
 
   const handleBack = () => navigate(-1);
   useEffect(() => {

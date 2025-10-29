@@ -245,5 +245,10 @@
   "Shows name of the project at the end of the video.": "Rodo projekto pavadinimą vaizo įrašo gale.",
   "Back to Welcome": "Grįžti į pradžią",
   "Email": "El. paštas (nebūtina)",
-  "If you want to receive the Google Drive link by email, enter your address.": "Jei norite gauti Google Drive nuorodą el. paštu, įveskite savo adresą."
+  "If you want to receive the Google Drive link by email, enter your address.": "Jei norite gauti Google Drive nuorodą el. paštu, įveskite savo adresą.",
+  "Background sound": "Foninė muzika",
+  "Select background audio for the exported video": "Pasirinkite foninę muziką vaizdo įrašui",
+  "Watch Intro Video": "Žiūrėti įvadinį vaizdo įrašą",
+  "Watch Tutorial": "Žiūrėti mokomąjį vaizdo įrašą"
+
 }
