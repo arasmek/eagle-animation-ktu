@@ -3,16 +3,16 @@ import ExportOverlay from '@components/ExportOverlay';
 import FormGroup from '@components/FormGroup';
 import FormLayout from '@components/FormLayout';
 import HeaderBar from '@components/HeaderBar';
-import Input from '@components/Input';
 import LoadingPage from '@components/LoadingPage';
 import PageContent from '@components/PageContent';
 import PageLayout from '@components/PageLayout';
+import Select from '@components/Select';
 import { ExportFrames } from '@core/Export';
 import { parseRatio } from '@core/ratio';
 import { GetFrameResolutions } from '@core/ResolutionsCache';
 import useProject from '@hooks/useProject';
 import useSettings from '@hooks/useSettings';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { withTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -23,8 +23,6 @@ const Export = ({ t }) => {
   const { project } = useProject({ id });
   const { settings } = useSettings();
 
-  const emailRef = useRef(null);
-
   const [isInfosOpened, setIsInfosOpened] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [frameRenderingProgress, setFrameRenderingProgress] = useState(0);
@@ -33,22 +31,15 @@ const Export = ({ t }) => {
   const [bestResolution, setBestResolution] = useState(null);
   const [driveLink, setDriveLink] = useState(null);
   const [exportBaseName, setExportBaseName] = useState(null);
+  const [audioTracks, setAudioTracks] = useState([]);
 
-
-  const { register, handleSubmit, watch } = useForm({
+  const { register, handleSubmit } = useForm({
     mode: 'all',
-    defaultValues: { mode: 'video', format: 'h264', videoResolution: 1080, addEndingText: true, uploadToDrive: true, userEmail: '' },
+    defaultValues: { backgroundSound: 'none' },
   });
 
   const projectRatio = parseRatio(project?.scenes?.[Number(track)]?.ratio)?.value || null;
   const framesKey = JSON.stringify(project?.scenes?.[Number(track)]?.pictures);
-
-  useEffect(() => {
-    if (!settings || !project) return;
-
-    const input = emailRef.current;
-    input?.focus();
-  }, [settings, project]);
 
   useEffect(() => {
     GetFrameResolutions(id, Number(track), project?.scenes?.[Number(track)]?.pictures)
@@ -59,6 +50,28 @@ const Export = ({ t }) => {
   useEffect(() => {
     if (resolutions) setBestResolution(getBestResolution(project?.scenes?.[Number(track)]?.pictures, resolutions, projectRatio));
   }, [resolutions, projectRatio, framesKey, project]);
+
+  useEffect(() => {
+    let disposed = false;
+    (async () => {
+      try {
+        const tracks = (await window.EA('LIST_AUDIO_TRACKS')) || [];
+        if (disposed) {
+          return;
+        }
+        const options = tracks.map((n) => ({ value: n, label: n.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ') }));
+        setAudioTracks(options);
+      } catch (_) {
+        if (!disposed) {
+          setAudioTracks([]);
+        }
+      }
+    })();
+
+    return () => {
+      disposed = true;
+    };
+  }, []);
 
   const handleBack = () => navigate(-1);
   useEffect(() => {
@@ -94,15 +107,18 @@ const Export = ({ t }) => {
       cancelled = true;
     };
   }, []);
-  const progress = watch('mode') === 'frames' ? Math.min(frameRenderingProgress, 1) : Math.min(frameRenderingProgress / 2, 0.5) + Math.min(videoRenderingProgress / 2, 0.5);
+  const progress = Math.min(frameRenderingProgress / 2, 0.5) + Math.min(videoRenderingProgress / 2, 0.5);
 
   const handleExport = async (data) => {
+    const exportResolution = 1080;
+    const exportFormat = 'h264';
+    const exportMode = 'video';
     const files = project.scenes[Number(track)].pictures;
     let resolution = projectRatio
-      ? { width: Number(data.videoResolution) * projectRatio, height: Number(data.videoResolution) }
+      ? { width: exportResolution * projectRatio, height: exportResolution }
       : (() => {
           const maxResolution = getBestResolution(files, resolutions);
-          return { width: (Number(data.videoResolution) * maxResolution.width) / maxResolution.height, height: Number(data.videoResolution) };
+          return { width: (exportResolution * maxResolution.width) / maxResolution.height, height: exportResolution };
         })();
 
     resolution = floorResolution(resolution);
@@ -121,32 +137,35 @@ const Export = ({ t }) => {
     const exportSettings = {
       duplicateFramesCopy: true,
       duplicateFramesAuto: true,
-      duplicateFramesAutoNumber: 10,
+      duplicateFramesAutoNumber: 2,
       forceFileExtension: 'jpg',
       resolution,
     };
 
-    window.track('project_exported', { projectId: project.id, ...data, ...exportSettings });
+    window.track('project_exported', { projectId: project.id, mode: exportMode, format: exportFormat, ...exportSettings, backgroundSound: data.backgroundSound });
 
     const frames = await ExportFrames(id, Number(track), files, exportSettings, (p) => setFrameRenderingProgress(p), createBuffer);
 
     await window.EA('EXPORT', {
       frames: frames.map(({ mimeType, bufferId, ...e }) => ({ ...e, buffer_id: bufferId, mime_type: mimeType })),
       output_path: outputPath,
-      mode: data.mode,
-      format: data.format,
+      mode: exportMode,
+      format: exportFormat,
       framerate: project?.scenes?.[Number(track)]?.framerate,
       project_id: id,
       track_id: track,
       event_key: settings.EVENT_KEY,
-      add_ending_text: data.addEndingText,
+      add_ending_text: true,
       ending_text: project?.title ? `${project.title}` : '',
-      uploadToDrive: data.uploadToDrive,
-      userEmail: data.userEmail,
+      uploadToDrive: true,
+      userEmail: '',
+      background_sound: data.backgroundSound && data.backgroundSound !== 'none' ? data.backgroundSound : undefined,
     });
 
     setIsExporting(false);
   };
+
+  const backgroundSoundOptions = useMemo(() => [{ value: 'none', label: t('None') }, ...audioTracks], [audioTracks, t]);
 
   return (
     <>
@@ -157,14 +176,8 @@ const Export = ({ t }) => {
           {settings && (
             <form onSubmit={handleSubmit(handleExport)}>
               <FormLayout>
-                <FormGroup label={t('Email')} description={t('If you want to receive the Google Drive link by email, enter your address.')}>
-                  <Input
-                    placeholder={t('your@email.com')}
-                    type="email"
-                    style={{ width: '100%', padding: '8px', fontSize: '1em' }}
-                    {...register('userEmail')}
-                    ref={(el) => (register('userEmail').ref(el), (emailRef.current = el))}
-                  />
+                <FormGroup label={t('Background sound')} description={t('Select background audio for the exported video')}>
+                  <Select options={backgroundSoundOptions} register={register('backgroundSound')} />
                 </FormGroup>
 
                 <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
