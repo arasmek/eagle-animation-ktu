@@ -1,0 +1,119 @@
+.layout {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.form {
+  width: 100%;
+}
+
+.contentWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 36px 24px 48px;
+  min-height: 70vh;
+}
+
+.heroTitle {
+  color: var(--color-white);
+  font-weight: 600;
+  font-size: clamp(2.4rem, 4vw, 3.2rem);
+  text-align: center;
+}
+
+.subtitle {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: clamp(1.1rem, 2vw, 1.3rem);
+  max-width: 720px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.card {
+  width: min(640px, 92vw);
+  padding: 28px 32px;
+  border-radius: 26px;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  background: rgba(8, 20, 38, 0.9);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.fieldLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.fieldDescription {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+
+.audioSelect {
+  width: 100%;
+  padding: 16px 20px;
+  border-radius: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  background: rgba(15, 32, 56, 0.95);
+  color: var(--color-white);
+  font-size: 1.1rem;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
+}
+
+.primaryButton {
+  margin-top: 12px;
+  padding: 18px 42px;
+  border-radius: 26px;
+  border: none;
+  background: linear-gradient(135deg, #2b63ff, #8a88ff);
+  color: var(--color-white);
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  box-shadow: 0 18px 32px rgba(43, 99, 255, 0.35);
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.primaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: none;
+}
+
+.primaryButton:not(:disabled):hover,
+.primaryButton:not(:disabled):focus {
+  transform: scale(0.99);
+  box-shadow: 0 16px 28px rgba(43, 99, 255, 0.4);
+  outline: none;
+}
+
+.helperText {
+  margin-top: 12px;
+  max-width: 600px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .card {
+    padding: 22px 20px;
+  }
+
+  .primaryButton {
+    width: min(320px, 100%);
+  }
+}

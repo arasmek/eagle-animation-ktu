@@ -1,7 +1,5 @@
 import { floorResolution, getBestResolution } from '@common/resolution';
 import ExportOverlay from '@components/ExportOverlay';
-import FormGroup from '@components/FormGroup';
-import FormLayout from '@components/FormLayout';
 import HeaderBar from '@components/HeaderBar';
 import LoadingPage from '@components/LoadingPage';
 import PageContent from '@components/PageContent';
@@ -16,6 +14,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { withTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
+
+import * as style from './Export.module.css';
 
 const Export = ({ t }) => {
   const { id, track } = useParams();
@@ -52,7 +52,9 @@ const Export = ({ t }) => {
   }, [framesKey, id, track]);
 
   useEffect(() => {
-    if (resolutions) setBestResolution(getBestResolution(project?.scenes?.[Number(track)]?.pictures, resolutions, projectRatio));
+    if (resolutions) {
+      setBestResolution(getBestResolution(project?.scenes?.[Number(track)]?.pictures, resolutions, projectRatio));
+    }
   }, [resolutions, projectRatio, framesKey, project]);
 
   useEffect(() => {
@@ -282,28 +284,50 @@ const Export = ({ t }) => {
     <>
       <LoadingPage show={!settings || !bestResolution} />
       <PageLayout>
-        <HeaderBar leftActions={['BACK']} onAction={handleBack} title={t('Export')} withBorder />
-        <PageContent>
-          {settings && (
-            <form onSubmit={handleSubmit(handleExport)}>
-              <FormLayout>
-                <FormGroup label={t('Background sound')} description={t('Select background audio for the exported video')}>
-                  <Select options={backgroundSoundOptions} register={register('backgroundSound')} />
-                </FormGroup>
+        <div className={style.layout}>
+          <HeaderBar leftActions={['BACK']} onAction={handleBack} title={t('Export')} withBorder />
+          <PageContent>
+            {settings && (
+              <form onSubmit={handleSubmit(handleExport)} className={style.form}>
+                <div className={style.contentWrapper}>
+                  <h2 className={style.heroTitle}>
+                    {t ? t('Ready to share your animation?') : 'Ready to share your animation?'}
+                  </h2>
+                  <p className={style.subtitle}>
+                    {t
+                      ? t('Pick a background track. We will export a 1080p video with ending credits and upload it to Drive automatically.')
+                      : 'Pick a background track. We will export a 1080p video with ending credits and upload it to Drive automatically.'}
+                  </p>
 
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
-                  <button
-                    type="submit"
-                    disabled={isInfosOpened}
-                    style={{ padding: '12px 32px', fontSize: '1.1em', borderRadius: '8px', background: 'var(--color-primary)', color: '#fff', border: 'none', cursor: 'pointer' }}
-                  >
-                    {t('Export')}
+                  <div className={style.card}>
+                    <label className={style.fieldLabel} htmlFor="export-audio">
+                      {t ? t('Background sound') : 'Background sound'}
+                      <span className={style.fieldDescription}>
+                        {t ? t('Tracks preview automatically when selected') : 'Tracks preview automatically when selected'}
+                      </span>
+                    </label>
+                    <Select
+                      id="export-audio"
+                      options={backgroundSoundOptions}
+                      register={register('backgroundSound')}
+                      className={style.audioSelect}
+                    />
+                  </div>
+
+                  <button type="submit" disabled={isInfosOpened} className={style.primaryButton}>
+                    {isExporting ? t('Exporting…') : t('Export')}
                   </button>
+
+                  <p className={style.helperText}>
+                    {t
+                      ? t('Tip: duplicates first and last frames for smoother loops and emails you a Drive link once the render finishes.')
+                      : 'Tip: duplicates first and last frames for smoother loops and emails you a Drive link once the render finishes.'}
+                  </p>
                 </div>
-              </FormLayout>
-            </form>
-          )}
-        </PageContent>
+              </form>
+            )}
+          </PageContent>
+        </div>
       </PageLayout>
       {isInfosOpened && (
         <ExportOverlay

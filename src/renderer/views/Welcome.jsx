@@ -26,6 +26,9 @@ const WelcomeView = ({ t }) => {
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [currentVideo, setCurrentVideo] = useState(null);
   const overlayVideoRef = useRef(null);
+  const adHoldTimerRef = useRef(null);
+  const adHoldTriggeredRef = useRef(false);
+  const [adHoldActive, setAdHoldActive] = useState(false);
 
   useEffect(() => {
     nameInputRef.current?.focus();
@@ -91,6 +94,64 @@ const WelcomeView = ({ t }) => {
     if (e.key === 'Enter') handleBegin();
   };
 
+  const cancelAdHold = () => {
+    if (adHoldTimerRef.current) {
+      clearTimeout(adHoldTimerRef.current);
+      adHoldTimerRef.current = null;
+    }
+    if (!adHoldTriggeredRef.current) {
+      setAdHoldActive(false);
+    }
+    adHoldTriggeredRef.current = false;
+  };
+
+  const startAdHold = () => {
+    if (adHoldTimerRef.current) {
+      clearTimeout(adHoldTimerRef.current);
+    }
+    adHoldTriggeredRef.current = false;
+    setAdHoldActive(true);
+    adHoldTimerRef.current = window.setTimeout(() => {
+      adHoldTimerRef.current = null;
+      adHoldTriggeredRef.current = true;
+      setAdHoldActive(false);
+      openVideo(adVideoSrc);
+    }, 1000);
+  };
+
+  const handleAdPointerDown = (event) => {
+    if (event) {
+      event.preventDefault();
+    }
+    startAdHold();
+  };
+
+  const handleAdPointerUp = (event) => {
+    if (event) {
+      event.preventDefault();
+    }
+    cancelAdHold();
+  };
+
+  const handleAdKeyDown = (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+    if (event.repeat) {
+      return;
+    }
+    event.preventDefault();
+    startAdHold();
+  };
+
+  const handleAdKeyUp = (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+    event.preventDefault();
+    cancelAdHold();
+  };
+
   return (
     <>
       <PageLayout>
@@ -100,48 +161,60 @@ const WelcomeView = ({ t }) => {
           </HeaderBar>
           <PageContent>
             <div className={style.contentWrapper}>
-            <h2 className={style.heroTitle}>{t ? t('Enter your name to begin') : 'Enter your name to begin'}</h2>
-            <input
-              ref={nameInputRef}
-              type="text"
-              value={userName}
-              onChange={(e) => {
-                setUserName(e.target.value);
-                setError('');
-              }}
-              onKeyDown={handleKeyDown}
-              placeholder={t ? t('Your name') : 'Your name'}
-              className={style.nameInput}
-            />
-            {error && <div className={style.errorMessage}>{error}</div>}
+              <h2 className={style.heroTitle}>{t ? t('Enter your name to begin') : 'Enter your name to begin'}</h2>
+              <input
+                ref={nameInputRef}
+                type="text"
+                value={userName}
+                onChange={(e) => {
+                  setUserName(e.target.value);
+                  setError('');
+                }}
+                onKeyDown={handleKeyDown}
+                placeholder={t ? t('Your name') : 'Your name'}
+                className={style.nameInput}
+              />
+              {error && <div className={style.errorMessage}>{error}</div>}
 
-            <Button onClick={handleBegin} className={style.primaryButton} icon={Camera} />
+              <Button onClick={handleBegin} className={style.primaryButton} icon={Camera} />
 
-            <button onClick={toggleLanguage} className={style.languageButton}>
-              {i18n.language === 'en' ? 'LIETUVIŠKAI' : 'ENGLISH'}
-            </button>
+              <button onClick={toggleLanguage} className={style.languageButton}>
+                {i18n.language === 'en' ? 'LIETUVIŠKAI' : 'ENGLISH'}
+              </button>
 
-            <div className={style.legacyLink}>
-              <Link to="/home">{t ? t('Old home') : 'Old home'}</Link>
-            </div>
+              <div className={style.legacyLink}>
+                <Link to="/home">{t ? t('Old home') : 'Old home'}</Link>
+              </div>
 
-            {tutorialVideoSrc && (
-              <div className={style.tutorialBlock}>
-                <h3 className={style.tutorialHeading}>{t ? t('Need a refresher? Watch our quick tutorial.') : 'Need a refresher? Watch our quick tutorial.'}</h3>
-                <div className={style.actionGrid}>
-                  <button onClick={() => openVideo(tutorialVideoSrc)} className={style.videoButton}>
-                    {t ? t('Play Tutorial Video') : 'Play Tutorial Video'}
+              {tutorialVideoSrc && (
+                <div className={style.tutorialBlock}>
+                  <h3 className={style.tutorialHeading}>{t ? t('Need a refresher? Watch our quick tutorial.') : 'Need a refresher? Watch our quick tutorial.'}</h3>
+                  <div className={style.actionGrid}>
+                    <button onClick={() => openVideo(tutorialVideoSrc)} className={style.videoButton}>
+                      {t ? t('Play Tutorial Video') : 'Play Tutorial Video'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {adVideoSrc && (
+                <div className={style.hiddenAdZone}>
+                  <button
+                    className={`${style.videoButtonHidden} ${adHoldActive ? style.adHoldActive : ''}`}
+                    onPointerDown={handleAdPointerDown}
+                    onPointerUp={handleAdPointerUp}
+                    onPointerLeave={handleAdPointerUp}
+                    onPointerCancel={handleAdPointerUp}
+                    onKeyDown={handleAdKeyDown}
+                    onKeyUp={handleAdKeyUp}
+                    onContextMenu={(event) => event.preventDefault()}
+                  >
+                    {t ? t('Hold to watch intro video') : 'Hold to watch intro video'}
                   </button>
                 </div>
-              </div>
-            )}
+              )}
             </div>
           </PageContent>
-          {adVideoSrc && (
-            <button onClick={() => openVideo(adVideoSrc)} className={style.hiddenAdButton}>
-              {t ? t('Watch Intro Video') : 'Watch Intro Video'}
-            </button>
-          )}
         </div>
       </PageLayout>
 
