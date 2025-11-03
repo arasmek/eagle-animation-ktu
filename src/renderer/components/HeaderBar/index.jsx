@@ -41,6 +41,9 @@ const HeaderBar = ({ onAction = null, leftActions = [], rightActions = [], child
   const [customExportHoldActive, setCustomExportHoldActive] = useState(false);
   const customExportTimerRef = useRef(null);
   const customExportTriggeredRef = useRef(false);
+  const [settingsHoldActive, setSettingsHoldActive] = useState(false);
+  const settingsHoldTimerRef = useRef(null);
+  const settingsHoldTriggeredRef = useRef(false);
 
   const triggerAction = useCallback(
     (action) => {
@@ -109,6 +112,62 @@ const HeaderBar = ({ onAction = null, leftActions = [], rightActions = [], child
 
   const filteredRightActions = rightActions.filter((action) => action !== 'CUSTOM_EXPORT');
 
+  const cancelSettingsHold = useCallback(() => {
+    if (settingsHoldTimerRef.current) {
+      clearTimeout(settingsHoldTimerRef.current);
+      settingsHoldTimerRef.current = null;
+    }
+    if (!settingsHoldTriggeredRef.current) {
+      setSettingsHoldActive(false);
+    }
+    settingsHoldTriggeredRef.current = false;
+  }, []);
+
+  const startSettingsHold = useCallback(() => {
+    if (settingsHoldTimerRef.current) {
+      clearTimeout(settingsHoldTimerRef.current);
+    }
+    settingsHoldTriggeredRef.current = false;
+    setSettingsHoldActive(true);
+    settingsHoldTimerRef.current = window.setTimeout(() => {
+      settingsHoldTimerRef.current = null;
+      settingsHoldTriggeredRef.current = true;
+      setSettingsHoldActive(false);
+      triggerAction('SETTINGS');
+    }, LONG_PRESS_MS);
+  }, [triggerAction]);
+
+  useEffect(() => cancelSettingsHold, [cancelSettingsHold]);
+
+  const handleSettingsPointerDown = (event) => {
+    event.preventDefault();
+    startSettingsHold();
+  };
+
+  const handleSettingsPointerCancel = (event) => {
+    event.preventDefault();
+    cancelSettingsHold();
+  };
+
+  const handleSettingsKeyDown = (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+    if (event.repeat) {
+      return;
+    }
+    event.preventDefault();
+    startSettingsHold();
+  };
+
+  const handleSettingsKeyUp = (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+    event.preventDefault();
+    cancelSettingsHold();
+  };
+
   return (
     <div className={`${style.headerBar} ${withBorder && style.withBorder}`}>
       <div className={`${style.side} ${style.left}`}>
@@ -147,6 +206,27 @@ const HeaderBar = ({ onAction = null, leftActions = [], rightActions = [], child
                 </div>
                 <ActionButton type={type} onClick={() => triggerAction(type)} tooltipPosition="NONE" />
               </Fragment>
+            );
+          }
+          if (type === 'SETTINGS') {
+            return (
+              <div
+                key="SETTINGS"
+                className={`${style.holdableButton} ${settingsHoldActive ? style.holdableButtonActive : ''}`}
+                role="button"
+                tabIndex={0}
+                aria-label="Hold to open settings"
+                onPointerDown={handleSettingsPointerDown}
+                onPointerUp={handleSettingsPointerCancel}
+                onPointerLeave={handleSettingsPointerCancel}
+                onPointerCancel={handleSettingsPointerCancel}
+                onPointerOut={handleSettingsPointerCancel}
+                onKeyDown={handleSettingsKeyDown}
+                onKeyUp={handleSettingsKeyUp}
+                onContextMenu={(event) => event.preventDefault()}
+              >
+                <ActionButton type={type} onClick={() => {}} tooltipPosition="NONE" />
+              </div>
             );
           }
           return <ActionButton type={type} key={type} onClick={() => triggerAction(type)} tooltipPosition="NONE" />;

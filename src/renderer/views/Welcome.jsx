@@ -156,9 +156,16 @@ const WelcomeView = ({ t }) => {
     <>
       <PageLayout>
         <div className={style.layout}>
-          <HeaderBar withBorder>
-            <Logo />
-          </HeaderBar>
+          <div className={style.languageCorner}>
+            {tutorialVideoSrc && (
+              <button className={style.helpButton} onClick={() => openVideo(tutorialVideoSrc)} title={t ? t('Need help? tooltip') : 'Play tutorial'} aria-label={t ? t('Need help?') : 'Need help?'}>
+                ?
+              </button>
+            )}
+            <button onClick={toggleLanguage} className={style.languageButton}>
+              {i18n.language === 'en' ? 'LIETUVIŠKAI' : 'ENGLISH'}
+            </button>
+          </div>
           <PageContent>
             <div className={style.contentWrapper}>
               <h2 className={style.heroTitle}>{t ? t('Enter your name to begin') : 'Enter your name to begin'}</h2>
@@ -178,25 +185,6 @@ const WelcomeView = ({ t }) => {
 
               <Button onClick={handleBegin} className={style.primaryButton} icon={Camera} />
 
-              <button onClick={toggleLanguage} className={style.languageButton}>
-                {i18n.language === 'en' ? 'LIETUVIŠKAI' : 'ENGLISH'}
-              </button>
-
-              <div className={style.legacyLink}>
-                <Link to="/home">{t ? t('Old home') : 'Old home'}</Link>
-              </div>
-
-              {tutorialVideoSrc && (
-                <div className={style.tutorialBlock}>
-                  <h3 className={style.tutorialHeading}>{t ? t('Need a refresher? Watch our quick tutorial.') : 'Need a refresher? Watch our quick tutorial.'}</h3>
-                  <div className={style.actionGrid}>
-                    <button onClick={() => openVideo(tutorialVideoSrc)} className={style.videoButton}>
-                      {t ? t('Play Tutorial Video') : 'Play Tutorial Video'}
-                    </button>
-                  </div>
-                </div>
-              )}
-
               {adVideoSrc && (
                 <div className={style.hiddenAdZone}>
                   <button
@@ -215,6 +203,9 @@ const WelcomeView = ({ t }) => {
               )}
             </div>
           </PageContent>
+          <div className={style.footerLink}>
+            <Link to="/home">{t ? t('Old home') : 'Old home'}</Link>
+          </div>
         </div>
       </PageLayout>
 

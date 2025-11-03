@@ -141,7 +141,7 @@ const Export = ({ t }) => {
               audioPreviewRef.current = null;
             }
           },
-          { once: true },
+          { once: true }
         );
 
         audioPreviewTimerRef.current = setTimeout(() => {
@@ -290,39 +290,23 @@ const Export = ({ t }) => {
             {settings && (
               <form onSubmit={handleSubmit(handleExport)} className={style.form}>
                 <div className={style.contentWrapper}>
-                  <h2 className={style.heroTitle}>
-                    {t ? t('Ready to share your animation?') : 'Ready to share your animation?'}
-                  </h2>
+                  <h2 className={style.heroTitle}>{t ? t('Ready to share your animation?') : 'Ready to share your animation?'}</h2>
                   <p className={style.subtitle}>
                     {t
-                      ? t('Pick a background track. We will export a 1080p video with ending credits and upload it to Drive automatically.')
-                      : 'Pick a background track. We will export a 1080p video with ending credits and upload it to Drive automatically.'}
+                      ? t('Pick a song (or leave it without sound) and your animation will saved.')
+                      : 'Pick a song (or leave it without sound) and your animation will saved.'}
                   </p>
 
                   <div className={style.card}>
                     <label className={style.fieldLabel} htmlFor="export-audio">
                       {t ? t('Background sound') : 'Background sound'}
-                      <span className={style.fieldDescription}>
-                        {t ? t('Tracks preview automatically when selected') : 'Tracks preview automatically when selected'}
-                      </span>
                     </label>
-                    <Select
-                      id="export-audio"
-                      options={backgroundSoundOptions}
-                      register={register('backgroundSound')}
-                      className={style.audioSelect}
-                    />
+                    <Select id="export-audio" options={backgroundSoundOptions} register={register('backgroundSound')} className={style.audioSelect} />
                   </div>
 
                   <button type="submit" disabled={isInfosOpened} className={style.primaryButton}>
                     {isExporting ? t('Exporting…') : t('Export')}
                   </button>
-
-                  <p className={style.helperText}>
-                    {t
-                      ? t('Tip: duplicates first and last frames for smoother loops and emails you a Drive link once the render finishes.')
-                      : 'Tip: duplicates first and last frames for smoother loops and emails you a Drive link once the render finishes.'}
-                  </p>
                 </div>
               </form>
             )}

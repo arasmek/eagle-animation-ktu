@@ -76,13 +76,13 @@
   padding: 18px 42px;
   border-radius: 26px;
   border: none;
-  background: linear-gradient(135deg, #2b63ff, #8a88ff);
+  background: #2b63ff;
   color: var(--color-white);
   font-size: 1.3rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   cursor: pointer;
-  box-shadow: 0 18px 32px rgba(43, 99, 255, 0.35);
+  box-shadow: none;
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
@@ -94,8 +94,8 @@
 
 .primaryButton:not(:disabled):hover,
 .primaryButton:not(:disabled):focus {
-  transform: scale(0.99);
-  box-shadow: 0 16px 28px rgba(43, 99, 255, 0.4);
+  transform: none;
+  box-shadow: none;
   outline: none;
 }
 

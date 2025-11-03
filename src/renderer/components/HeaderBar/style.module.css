@@ -90,3 +90,24 @@
     opacity: 0.7;
     transform: scale(1);
 }
+
+.holdableButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+}
+
+.holdableButtonActive {
+    animation: pulse 0.8s infinite alternate;
+}
+
+@keyframes pulse {
+    from {
+        filter: brightness(1);
+    }
+
+    to {
+        filter: brightness(1.2);
+    }
+}
