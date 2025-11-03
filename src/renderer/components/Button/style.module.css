@@ -7,7 +7,7 @@
 }
 
 .button {
-    --size:56px;
+    --size:68px;
 
     align-items: center;
     background-color: var(--color-theme-medium);
@@ -50,9 +50,9 @@
 .button>svg {
     background-size: contain;
     display: inline-block;
-    height: 28px;
+    height: 32px;
     vertical-align: middle;
-    width: 28px;
+    width: 32px;
 }
 
 .button>svg path {
@@ -66,7 +66,7 @@
     gap: 4px;
     height: auto;
     justify-content: flex-start;
-    min-width: 72px;
+    min-width: 82px;
     text-align: center;
 }
 

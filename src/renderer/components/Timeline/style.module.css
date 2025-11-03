@@ -1,6 +1,6 @@
 .container {
   /* Height img + scollbar */
-  background: linear-gradient(0deg,var(--color-theme-light) 0%, var(--color-theme-dark) 100%);
+  background: var(--color-theme-dark);
   box-sizing: border-box;
   overflow: scroll hidden;
   padding-left: 2px;
