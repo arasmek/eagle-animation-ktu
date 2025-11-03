@@ -1,57 +1,63 @@
 .layout {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 .layout :global(.pageContent) {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  overflow: hidden;
 }
 
 .workspace {
-  display: flex;
-  flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
-  gap: 12px;
-  padding: 16px clamp(10px, 3vw, 24px) 22px;
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  gap: 10px;
+  padding: 12px clamp(10px, 3vw, 20px);
+  overflow: hidden;
 }
 
 .playerShell {
-  flex: 1 1 auto;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(10, 20, 36, 0.9);
-  padding: 0;
-  display: flex;
-  justify-content: center;
-}
-
-.playerFrame {
-  width: min(100%, 1600px);
-  margin: 0 auto;
-  aspect-ratio: 16 / 9;
   display: flex;
   align-items: center;
   justify-content: center;
-  max-height: calc(100vh - 150px);
+  overflow: hidden;
+  min-height: 57dvh;
+}
+
+.playerFrame {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-height: none;
 }
 
 .playerFrame :global(> *) {
   width: 100%;
   height: 100%;
+  object-fit: contain;
 }
 
 .panel {
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(12, 24, 42, 0.82);
-  padding: 14px;
+  padding: 12px;
+  flex-shrink: 0;
 }
 
+.controlPanel {
+  overflow: hidden;
+}
 
 .controlPanel :global(.container) {
   min-height: 88px;
@@ -68,31 +74,82 @@
   min-width: 110px;
 }
 
+.timelinePanel {
+  padding: 8px 10px;
+  min-height: 100px;
+  display: flex;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.timelinePanel :global(.container) {
+  flex: 1 1 auto;
+}
+
 .limitWrapper {
   display: flex;
   justify-content: center;
-  margin-top: auto;
+  align-items: center;
 }
 
+/* --- responsive tweaks --- */
+@media (max-width: 1200px) {
+  .workspace {
+    gap: 8px;
+    padding: 10px clamp(10px, 4vw, 18px);
+  }
+}
 
 @media (max-width: 900px) {
   .workspace {
-    padding: 18px 10px 24px;
-    gap: 14px;
+    gap: 6px;
+    padding: 8px 10px;
   }
 
   .playerShell {
-    padding: 6px;
-  }
-
-  .playerFrame {
-    width: 100%;
-    max-height: calc(100vh - 200px);
+    padding: 4px;
   }
 
   .controlPanel :global(.container) {
-    min-height: 100px;
+    min-height: 84px;
     padding: 6px 8px;
-    row-gap: 6px;
+    row-gap: 4px;
+  }
+
+  .timelinePanel {
+    padding: 6px 8px;
+    min-height: 90px;
+  }
+}
+
+@media (max-width: 600px) {
+  .workspace {
+    gap: 5px;
+    padding: 6px 8px;
+  }
+
+  .panel {
+    padding: 8px 6px;
+  }
+
+  .controlPanel :global(.container) {
+    min-height: 80px;
+    padding: 6px;
+  }
+
+  .timelinePanel {
+    padding: 6px 8px;
+    min-height: 80px;
+  }
+}
+
+/* if height is short (e.g., 1080p with windowed mode) */
+@media (max-height: 800px) {
+  .timelinePanel {
+    min-height: 80px;
+  }
+
+  .controlPanel :global(.container) {
+    min-height: 70px;
   }
 }
