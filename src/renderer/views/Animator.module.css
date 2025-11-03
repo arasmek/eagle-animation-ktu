@@ -3,8 +3,8 @@
   flex-direction: column;
   height: 100dvh;              /* fill screen */
   overflow: hidden;            /* never scroll */
-  --player-min-vh: 48vh;       /* how big the player must be */
-  --player-max-vh: 58vh;       /* how big it’s allowed to grow */
+  --player-min-vh: 68vh;       /* how big the player must be */
+  --player-max-vh: 68vh;       /* how big it’s allowed to grow */
 }
 
 .layout :global(.pageContent) {
@@ -20,9 +20,9 @@
   min-height: 0;
   display: grid;
   grid-template-rows: minmax(var(--player-min-vh), var(--player-max-vh)) auto auto;
-  gap: 10px;
-  padding: 12px clamp(10px, 3vw, 20px);
+  gap: 3px;
   overflow: hidden;
+  justify-content: center; 
 }
 
 /* ===== Player Area ===== */
@@ -46,18 +46,12 @@
   max-height: var(--player-max-vh);
 }
 
-.playerFrame :global(> *) {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
 
 /* ===== Panels ===== */
 .panel {
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(12, 24, 42, 0.82);
-  padding: 12px;
   flex-shrink: 0;
 }
 
@@ -67,7 +61,6 @@
 
 .controlPanel :global(.container) {
   min-height: 88px;
-  padding: 6px 10px;
   row-gap: 6px;
 }
 
@@ -76,12 +69,10 @@
 }
 
 .controlPanel :global(.sliderGroup) {
-  gap: 2px;
   min-width: 110px;
 }
 
 .timelinePanel {
-  padding: 8px 10px;
   min-height: 100px;
   display: flex;
   flex-shrink: 0;
@@ -92,90 +83,9 @@
   flex: 1 1 auto;
 }
 
-/* ===== Limit warning ===== */
 .limitWrapper {
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-/* ===== Responsive Tweaks ===== */
-@media (max-width: 1200px) {
-  .workspace {
-    gap: 8px;
-    padding: 10px clamp(10px, 4vw, 18px);
-  }
-}
-
-@media (max-width: 900px) {
-  .workspace {
-    gap: 6px;
-    padding: 8px 10px;
-  }
-
-  .playerShell {
-    padding: 4px;
-  }
-
-  .controlPanel :global(.container) {
-    min-height: 84px;
-    padding: 6px 8px;
-    row-gap: 4px;
-  }
-
-  .timelinePanel {
-    padding: 6px 8px;
-    min-height: 90px;
-  }
-}
-
-@media (max-width: 600px) {
-  .workspace {
-    gap: 5px;
-    padding: 6px 8px;
-  }
-
-  .panel {
-    padding: 8px 6px;
-  }
-
-  .controlPanel :global(.container) {
-    min-height: 80px;
-    padding: 6px;
-  }
-
-  .timelinePanel {
-    padding: 6px 8px;
-    min-height: 80px;
-  }
-}
-
-/* ===== Adjust player proportions for short/tall screens ===== */
-@media (max-height: 900px) {
-  .layout {
-    --player-min-vh: 42vh;
-    --player-max-vh: 50vh;
-  }
-}
-
-@media (max-height: 800px) {
-  .layout {
-    --player-min-vh: 38vh;
-    --player-max-vh: 46vh;
-  }
-
-  .timelinePanel {
-    min-height: 80px;
-  }
-
-  .controlPanel :global(.container) {
-    min-height: 70px;
-  }
-}
-
-@media (min-height: 1200px) {
-  .layout {
-    --player-min-vh: 55vh;
-    --player-max-vh: 65vh;
-  }
-}
