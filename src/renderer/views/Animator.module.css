@@ -1,0 +1,87 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px clamp(10px, 3vw, 24px) 28px;
+}
+
+.playerShell {
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(10, 20, 36, 0.9);
+  padding: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.playerFrame {
+  width: min(100%, 1600px);
+  margin: 0 auto;
+  aspect-ratio: 16 / 9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-height: calc(92vh - 180px);
+}
+
+.playerFrame :global(> *) {
+  width: 100%;
+  height: 100%;
+}
+
+.panel {
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(12, 24, 42, 0.82);
+  padding: 14px;
+}
+
+
+.controlPanel :global(.container) {
+  min-height: 96px;
+  padding: 8px 12px;
+  row-gap: 10px;
+}
+
+.controlPanel :global(.group) {
+  row-gap: 6px;
+}
+
+.controlPanel :global(.sliderGroup) {
+  gap: 4px;
+  min-width: 110px;
+}
+
+.limitWrapper {
+  display: flex;
+  justify-content: center;
+}
+
+
+@media (max-width: 900px) {
+  .workspace {
+    padding: 18px 10px 24px;
+    gap: 14px;
+  }
+
+  .playerShell {
+    padding: 6px;
+  }
+
+  .playerFrame {
+    width: 100%;
+    max-height: none;
+  }
+
+  .controlPanel :global(.container) {
+    min-height: 110px;
+    padding: 8px 10px;
+    row-gap: 8px;
+  }
+}

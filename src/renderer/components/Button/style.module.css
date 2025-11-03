@@ -7,7 +7,7 @@
 }
 
 .button {
-    --size:64px;
+    --size:56px;
 
     align-items: center;
     background-color: var(--color-theme-medium);
@@ -16,7 +16,7 @@
     display: flex;
     height: var(--size);
     line-height: var(--size);
-    margin: 6px;
+    margin: 4px;
     place-content: center center;
     position: relative;
     text-align: center;
@@ -63,10 +63,10 @@
     align-items: center;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     height: auto;
     justify-content: flex-start;
-    min-width: 80px;
+    min-width: 72px;
     text-align: center;
 }
 
@@ -78,8 +78,13 @@
 .label {
     color: var(--color-white);
     font-size: 0.75rem;
-    line-height: 1;
+    line-height: 1.05;
     padding-bottom: 2px;
     text-align: center;
     user-select: none;
+    white-space: normal;
+    word-break: break-word;
+    max-width: 4.8rem;
+    display: block;
+    min-height: 1.7rem;
 }

@@ -6,9 +6,9 @@
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
-        min-height: 150px;
-        padding: var(--space-medium);
-        row-gap: var(--space-medium);
+        min-height: 110px;
+        padding: var(--space-small) var(--space-medium);
+        row-gap: var(--space-small);
         text-align: center;
         width: 100%;
     }
@@ -18,20 +18,20 @@
         column-gap: var(--space-small);
         display: flex;
         flex-wrap: wrap;
-        row-gap: var(--space-small);
+        row-gap: 4px;
         width: 100%;
     }
 
     .toolsGroup,
     .playbackGroup {
         justify-content: center;
-        padding: 0 0 var(--space-small);
+        padding: 0;
     }
 
     .captureGroup {
         display: flex;
         justify-content: center;
-        padding: var(--space-small) 0;
+        padding: 0;
         width: 100%;
     }
 
@@ -42,11 +42,12 @@
     .sliderGroup {
         margin-right: 0;
         width: 100%;
+        gap: 4px;
     }
 
     .hiddenHoldArea {
         flex: 1 1 100%;
-        height: 48px;
+        height: 44px;
         margin-bottom: var(--space-small);
         margin-right: 0;
     }
@@ -60,9 +61,9 @@
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
-        min-height: 130px;
-        padding: var(--space-medium) var(--space-large);
-        row-gap: var(--space-medium);
+        min-height: 108px;
+        padding: var(--space-small) calc(var(--space-medium) + 6px);
+        row-gap: var(--space-small);
         text-align: center;
         width: 100%;
     }
@@ -72,36 +73,37 @@
         column-gap: var(--space-small);
         display: flex;
         flex-wrap: wrap;
-        row-gap: var(--space-small);
+        row-gap: 4px;
     }
 
     .toolsGroup {
         flex: 1 1 0;
         justify-content: flex-end;
-        padding-right: var(--space-medium);
+        padding-right: var(--space-small);
     }
 
     .captureGroup {
         flex: 0 0 auto;
         justify-content: center;
-        padding: 0 var(--space-medium);
+        padding: 0 var(--space-small);
     }
 
     .playbackGroup {
         flex: 1 1 0;
         flex-wrap: nowrap;
         justify-content: flex-start;
-        padding-left: var(--space-medium);
+        padding-left: var(--space-small);
         column-gap: var(--space-small);
     }
 
     .sliderGroup {
-        margin-right: var(--space-medium);
+        margin-right: var(--space-small);
+        gap: 4px;
     }
 
     .hiddenHoldArea {
-        flex: 0 0 64px;
-        height: 100%;
+        flex: 0 0 48px;
+        height: 48px;
         margin-right: var(--space-small);
     }
 }
@@ -123,6 +125,7 @@
   font-size: 0.8rem;
   letter-spacing: 0.02em;
   text-transform: uppercase;
+  margin-top: 4px;
 }
 
 .slider {

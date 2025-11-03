@@ -46,7 +46,7 @@ const ControlBar = ({
         onAction(action, args);
       }
     },
-    [onAction],
+    [onAction]
   );
 
   const [isCameraHoldActive, setIsCameraHoldActive] = useState(false);
@@ -129,10 +129,10 @@ const ControlBar = ({
       </div>
       <div className={`${style.group} ${style.toolsGroup}`}>
         <div className={style.sliderGroup}>
-          <span className={style.sliderLabel}>{t('Onion blending')}</span>
           <div className={`${style.slider} ${differenceStatus ? style.sliderDisabled : ''}`} id="onion" data-tooltip-content={t('Onion blending')}>
             <CustomSlider step={0.01} min={0} max={1} value={onionValue} onChange={differenceStatus ? () => {} : (value) => handleAction('ONION_CHANGE', value)()} />
           </div>
+          <span className={style.sliderLabel}>{t('Onion blending')}</span>
         </div>
         {!isPlaying && framePosition !== false && (
           <Button
@@ -145,26 +145,21 @@ const ControlBar = ({
         {!isPlaying && framePosition !== false && canDeduplicate && (
           <Button title={t('Deduplicate frame')} label={t('Deduplicate frame')} onClick={handleAction('DEDUPLICATE')} icon={faImageCircleMinus} />
         )}
-        {!isPlaying && framePosition !== false && (
-          <Button title={t('Duplicate frame')} label={t('Duplicate frame')} onClick={handleAction('DUPLICATE')} icon={faImageCirclePlus} />
-        )}
-        {!isPlaying && framePosition !== false && (
-          <Button title={t('Remove frame')} label={t('Remove frame')} onClick={handleAction('DELETE_FRAME')} icon={faImageSlash} />
-        )}
+        {!isPlaying && framePosition !== false && <Button title={t('Duplicate frame')} label={t('Duplicate frame')} onClick={handleAction('DUPLICATE')} icon={faImageCirclePlus} />}
+        {!isPlaying && framePosition !== false && <Button title={t('Remove frame')} label={t('Remove frame')} onClick={handleAction('DELETE_FRAME')} icon={faImageSlash} />}
         <Button title={t('Difference')} label={t('Difference')} selected={differenceStatus} onClick={handleAction('DIFFERENCE')} icon={faDiamondHalfStroke} />
         {(gridModes.includes('GRID') || gridModes.includes('CENTER') || gridModes.includes('MARGINS')) && (
-          <Button title={gridStatus ? t('Disable grid') : t('Enable grid')} label={gridStatus ? t('Disable grid') : t('Enable grid')} selected={gridStatus} onClick={handleAction('GRID')} icon={faFrame} />
+          <Button
+            title={gridStatus ? t('Disable grid') : t('Enable grid')}
+            label={gridStatus ? t('Disable grid') : t('Enable grid')}
+            selected={gridStatus}
+            onClick={handleAction('GRID')}
+            icon={faFrame}
+          />
         )}
       </div>
       <div className={`${style.group} ${style.captureGroup}`}>
-        <Button
-          disabled={isTakingPicture || !isCameraReady}
-          onClick={handleAction('TAKE_PICTURE')}
-          color="primary"
-          icon={faCamera}
-          title={t('Take a picture')}
-          label={t('Take a picture')}
-        />
+        <Button disabled={isTakingPicture || !isCameraReady} onClick={handleAction('TAKE_PICTURE')} color="primary" icon={faCamera} title={t('Take a picture')} label={t('Take a picture')} />
       </div>
       <div className={`${style.group} ${style.playbackGroup}`}>
         <div className={style.previewWrapper}>
