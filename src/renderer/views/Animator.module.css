@@ -4,14 +4,24 @@
   min-height: 100vh;
 }
 
+.layout :global(.pageContent) {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .workspace {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px clamp(10px, 3vw, 24px) 28px;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 12px;
+  padding: 16px clamp(10px, 3vw, 24px) 22px;
 }
 
 .playerShell {
+  flex: 1 1 auto;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(10, 20, 36, 0.9);
@@ -27,7 +37,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  max-height: calc(92vh - 180px);
+  max-height: calc(100vh - 150px);
 }
 
 .playerFrame :global(> *) {
@@ -44,23 +54,24 @@
 
 
 .controlPanel :global(.container) {
-  min-height: 96px;
-  padding: 8px 12px;
-  row-gap: 10px;
-}
-
-.controlPanel :global(.group) {
+  min-height: 88px;
+  padding: 6px 10px;
   row-gap: 6px;
 }
 
+.controlPanel :global(.group) {
+  row-gap: 4px;
+}
+
 .controlPanel :global(.sliderGroup) {
-  gap: 4px;
+  gap: 2px;
   min-width: 110px;
 }
 
 .limitWrapper {
   display: flex;
   justify-content: center;
+  margin-top: auto;
 }
 
 
@@ -76,12 +87,12 @@
 
   .playerFrame {
     width: 100%;
-    max-height: none;
+    max-height: calc(100vh - 200px);
   }
 
   .controlPanel :global(.container) {
-    min-height: 110px;
-    padding: 8px 10px;
-    row-gap: 8px;
+    min-height: 100px;
+    padding: 6px 8px;
+    row-gap: 6px;
   }
 }

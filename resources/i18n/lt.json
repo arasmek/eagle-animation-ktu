@@ -259,5 +259,8 @@
     "Exporting...":  "Eksportuojama...",
     "Download from Google Drive":  "Atsisiųskite iš Google Drive",
     "Open link":  "Atidaryti nuorodą",
-    "Scan the QR code to open the link on another device.":  "Nuskaitykite QR kodą ir atidarykite nuorodą kitame įrenginyje."
+    "Scan the QR code to open the link on another device.":  "Nuskaitykite QR kodą ir atidarykite nuorodą kitame įrenginyje.",
+    "Ready to share your animation?":  "Pasiruošęs pasidalinti savo animacija?",
+    "Pick a song (or leave it without sound) and your animation will saved.":  "Pasirinkite dainą (arba palikite be garso) ir jūsų animacija bus išsaugota.",
+    "None": "Tyla"
 }
