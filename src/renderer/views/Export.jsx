@@ -305,7 +305,7 @@ const Export = ({ t }) => {
                   </div>
 
                   <button type="submit" disabled={isInfosOpened} className={style.primaryButton}>
-                    {isExporting ? t('Exporting…') : t('Export')}
+                    {isExporting ? t('Exporting...') : t('Export')}
                   </button>
                 </div>
               </form>

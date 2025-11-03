@@ -22,73 +22,52 @@ const ExportOverlay = ({
   const { actions: projectsActions } = useProjects();
   const navigate = useNavigate();
   const defaultCanvasId = useId();
-  const canvasId = useMemo(() => {
-    if (exportBaseName) {
-      return `ea-qr-${exportBaseName}`;
-    }
-    return `ea-qr-${defaultCanvasId.replace(/:/g, '-')}`;
-  }, [exportBaseName, defaultCanvasId]);
+  const canvasId = useMemo(
+    () => (exportBaseName ? `ea-qr-${exportBaseName}` : `ea-qr-${defaultCanvasId.replace(/:/g, '-')}`),
+    [exportBaseName, defaultCanvasId],
+  );
   const hasSavedQrRef = useRef(false);
-
-  const handleCreateProject = async () => {
-    const title = t('New project');
-    const project = await projectsActions.create(title);
-    navigate(`/animator/${project.id}/0`);
-    window.track('project_created', { projectId: project.id });
-  };
 
   useLayoutEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = '';
     };
-  });
+  }, []);
 
   useEffect(() => {
-    console.log('[ExportOverlay] props updated', { isExporting, driveLink, exportBaseName });
-  }, [isExporting, driveLink, exportBaseName]);
+    window.track?.('export_overlay_state', { state: isExporting ? 'exporting' : 'done' });
+  }, [isExporting]);
 
   useEffect(() => {
     if (isExporting || !driveLink || !exportBaseName) {
       hasSavedQrRef.current = false;
-      console.log('[ExportOverlay] reset hasSavedQrRef', { isExporting, driveLinkPresent: Boolean(driveLink), exportBaseName });
     }
   }, [isExporting, driveLink, exportBaseName]);
 
   useEffect(() => {
-    if (isExporting || !driveLink || !exportBaseName) {
-      console.log('[ExportOverlay] skip capture - missing data', {
-        isExporting,
-        driveLinkPresent: Boolean(driveLink),
-        exportBaseName,
-      });
-      return;
-    }
-    if (hasSavedQrRef.current) {
-      console.log('[ExportOverlay] skip capture - already saved');
+    if (isExporting || !driveLink || !exportBaseName || hasSavedQrRef.current) {
       return;
     }
 
-    console.log('[ExportOverlay] attempting capture', { isExporting, driveLink, exportBaseName });
     let cancelled = false;
     let attempt = 0;
     const maxAttempts = 8;
-    const pendingTimers = new Set();
+    const timers = new Set();
 
     const scheduleRetry = () => {
       if (cancelled || hasSavedQrRef.current || attempt >= maxAttempts) {
         return;
       }
       attempt += 1;
-      const delay = 150 * attempt;
       const timer = setTimeout(() => {
-        pendingTimers.delete(timer);
+        timers.delete(timer);
         trySave();
-      }, delay);
-      pendingTimers.add(timer);
+      }, 150 * attempt);
+      timers.add(timer);
     };
 
-    function trySave() {
+    const trySave = () => {
       if (cancelled || hasSavedQrRef.current) {
         return;
       }
@@ -111,31 +90,33 @@ const ExportOverlay = ({
             break;
           }
         }
-      } catch (err) {
-        // getImageData may fail if canvas is not ready yet; retry
+      } catch (_) {
+        scheduleRetry();
+        return;
       }
       if (!hasDarkPixel) {
         scheduleRetry();
         return;
       }
+
       let dataUrl = '';
       try {
         dataUrl = canvas.toDataURL('image/png');
-      } catch (err) {
-        console.warn('[ExportOverlay] canvas.toDataURL failed', err);
+      } catch (_) {
         scheduleRetry();
         return;
       }
+
       if (!dataUrl || dataUrl === 'data:image/png;base64,' || dataUrl === 'data:,') {
-        console.warn('[ExportOverlay] Empty QR data URL, retrying', { attempt });
         scheduleRetry();
         return;
       }
+
       if (typeof window?.EA !== 'function') {
         hasSavedQrRef.current = true;
         return;
       }
-      console.log('[ExportOverlay] Sending SAVE_QR_IMAGE', { exportBaseName, attempt, uploadToDrive: Boolean(driveLink) });
+
       window
         .EA('SAVE_QR_IMAGE', { dataUrl, exportBaseName, uploadToDrive: Boolean(driveLink) })
         .then((response) => {
@@ -143,108 +124,95 @@ const ExportOverlay = ({
             return;
           }
           if (!response?.success) {
-            console.error('SAVE_QR_IMAGE failed', response?.error);
             hasSavedQrRef.current = false;
             scheduleRetry();
             return;
           }
-          console.log('[ExportOverlay] SAVE_QR_IMAGE success', response?.path);
-          if (response?.driveError) {
-            console.error('[ExportOverlay] SAVE_QR_IMAGE drive upload error', response.driveError);
-          } else if (response?.driveLink) {
-            console.log('[ExportOverlay] SAVE_QR_IMAGE drive upload success', response.driveLink);
-          }
           hasSavedQrRef.current = true;
         })
-        .catch((error) => {
-          if (cancelled) {
-            return;
+        .catch(() => {
+          if (!cancelled) {
+            hasSavedQrRef.current = false;
+            scheduleRetry();
           }
-          console.error('SAVE_QR_IMAGE error', error);
-          hasSavedQrRef.current = false;
-          scheduleRetry();
         });
-    }
+    };
 
     trySave();
 
     return () => {
       cancelled = true;
-      pendingTimers.forEach((timer) => clearTimeout(timer));
+      timers.forEach((timer) => clearTimeout(timer));
     };
   }, [canvasId, driveLink, exportBaseName, isExporting]);
+
+  const handleCreateProject = async () => {
+    const title = t('New project');
+    const project = await projectsActions.create(title);
+    navigate(`/animator/${project.id}/0`);
+    window.track?.('project_created', { projectId: project.id });
+  };
+
+  const formattedCode = publicCode
+    ? publicCode
+        .split('')
+        .reduce((acc, char, index) => acc + (index && index % 2 === 0 ? ' ' : '') + char, '')
+        .trim()
+    : null;
 
   return (
     <div className={style.background}>
       {onCancel && (
-        <div onClick={onCancel} className={style.quit}>
+        <button type='button' onClick={onCancel} className={style.quit} aria-label={t('Back')}>
           <IconQuit />
-        </div>
+        </button>
       )}
-      {publicCode && (
-        <div className={style.code}>
-          {t("You'll be able to get your film using this code:")}
-          <div className={style.codeValue}>
-            {publicCode
-              .split('')
-              .reduce((acc, e, i) => acc + (i && i % 2 === 0 ? ' ' : '') + e, '')
-              .trim()}
+      <div className={`${style.container} ${isExporting ? style.loading : style.complete}`}>
+        {publicCode && (
+          <div className={style.publicCode}>
+            <span className={style.publicCodeLabel}>{t("You'll be able to get your film using this code:")}</span>
+            <span className={style.publicCodeValue}>{formattedCode}</span>
           </div>
-        </div>
-      )}
-      {isExporting && (
-        <div className={`${style.progressContainer} ${!publicCode && style.containerCenter}`}>
-          <span className={style.loader} />
-          <div className={style.progress}>{Math.min(100, Math.max(0, Math.round(progress * 100)))}%</div>
-        </div>
-      )}
-      {!isExporting && (
-        <div className={`${style.doneContainer} ${!publicCode && style.containerCenter}`}>
-          <div className={style.done}>
-            <IconDone />
-          </div>
-          {driveLink && (
-            <div style={{ marginTop: '1.5rem', textAlign: 'center', color: '#fff', maxWidth: '320px' }}>
-              <div style={{ fontSize: '1.1em', fontWeight: 600, marginBottom: '0.5rem' }}>{t('Download from Google Drive')}</div>
-              <a
-                href={driveLink}
-                target="_blank"
-                rel="noreferrer"
-                style={{ color: '#fff', textDecoration: 'underline', wordBreak: 'break-word', display: 'inline-block', marginBottom: '0.75rem' }}
-              >
-                {t('Open link')}
-              </a>
-              <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center' }}>
-                <div style={{ background: '#fff', padding: '12px', borderRadius: '12px' }}>
-                  <QRCodeCanvas id={canvasId} value={driveLink} size={160} includeMargin fgColor="#000000" bgColor="#ffffff" />
-                </div>
-              </div>
+        )}
+
+        {isExporting ? (
+          <>
+            <span className={style.loader} />
+            <h2 className={style.title}>{t('Your movie is being created!')}</h2>
+            <p className={style.subtitle}>{t('Hang tight while we prepare everything for you.')}</p>
+            <div className={style.progress}>{`${Math.min(100, Math.max(0, Math.round(progress * 100)))}%`}</div>
+            <p className={style.helper}>{t('Export will take a while, please be patient')}</p>
+          </>
+        ) : (
+          <>
+            <div className={style.doneIcon}>
+              <IconDone />
             </div>
-          )}
-        </div>
-      )}
-      {isExporting && <div className={style.info}>{t('Export will take a while, please be patient')}</div>}
-      {!isExporting && (
-        <div className={`${style.doneContainer} ${!publicCode && style.containerCenter}`}>
-          {publicCode && <ActionCard onClick={handleCreateProject} title={t('Create new project')} sizeAuto />}
-          <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-            <button
-              onClick={() => navigate('/')}
-              style={{
-                padding: '12px 24px',
-                fontSize: '1em',
-                borderRadius: '6px',
-                background: 'var(--color-primary)',
-                color: '#fff',
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              {t('Back to Welcome')}
+            <h2 className={style.title}>{t('Your movie is done!')}</h2>
+            <p className={style.subtitle}>{t('One of our personnel will guide you now.')}</p>
+
+            {driveLink && (
+              <div className={style.driveBlock}>
+
+                <div className={style.qrWrapper}>
+                  <QRCodeCanvas id={canvasId} value={driveLink} size={180} includeMargin fgColor='#000000' bgColor='#ffffff' />
+                </div>
+                <p className={style.qrHint}>{t('Scan the QR code to open the link on another device.')}</p>
+              </div>
+            )}
+
+            {publicCode && (
+              <div className={style.actionCardWrapper}>
+                <ActionCard onClick={handleCreateProject} title={t('Create new project')} sizeAuto />
+              </div>
+            )}
+
+            <button type='button' className={style.actionButton} onClick={() => navigate('/')}>
+              {t('Done')}
             </button>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </div>
     </div>
   );
 };

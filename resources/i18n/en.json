@@ -238,5 +238,14 @@
     "Build: {{id}}":  "Build: {{id}}",
     "Create new project":  "Create new project",
     "Need help?":  "Need help?",
-    "Need help? tooltip":  "Play our quick tutorial."
+    "Need help? tooltip":  "Play our quick tutorial.",
+    "Your movie is being created!":  "Your movie is being created!",
+    "Hang tight while we prepare everything for you.":  "Hang tight while we prepare everything for you.",
+    "Your movie is done!":  "Your movie is done!",
+    "One of our personnel will guide you now.":  "One of our personnel will guide you now.",
+    "Done":  "Done",
+    "Exporting...":  "Exporting...",
+    "Download from Google Drive":  "Download from Google Drive",
+    "Open link":  "Open link",
+    "Scan the QR code to open the link on another device.":  "Scan the QR code to open the link on another device."
 }
