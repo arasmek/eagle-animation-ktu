@@ -6,11 +6,14 @@ import PageLayout from '@components/PageLayout';
 import useProjects from '@hooks/useProjects';
 import useSettings from '@hooks/useSettings';
 import Camera from '@icons/faCamera';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation, withTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 
 import * as style from './Welcome.module.css';
+
+const IDLE_TUTORIAL_TIMEOUT = 5 * 60 * 1000;
+//const IDLE_TUTORIAL_TIMEOUT = 60 * 1000;
 
 const WelcomeView = ({ t }) => {
   const [userName, setUserName] = useState('');
@@ -29,6 +32,7 @@ const WelcomeView = ({ t }) => {
   const adHoldTimerRef = useRef(null);
   const adHoldTriggeredRef = useRef(false);
   const [adHoldActive, setAdHoldActive] = useState(false);
+  const idleTimerRef = useRef(null);
 
   useEffect(() => {
     nameInputRef.current?.focus();
@@ -58,8 +62,12 @@ const WelcomeView = ({ t }) => {
     })();
   }, [i18n.language]);
 
-  const openVideo = (src) => {
+  const openVideo = useCallback((src) => {
     if (!src) return;
+    if (idleTimerRef.current) {
+      window.clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = null;
+    }
     setCurrentVideo(src);
     setOverlayVisible(true);
     setTimeout(() => {
@@ -72,7 +80,37 @@ const WelcomeView = ({ t }) => {
         } catch {}
       }
     }, 100);
-  };
+  }, []);
+
+  const clearIdleTimer = useCallback(() => {
+    if (idleTimerRef.current) {
+      window.clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleIdlePlayback = useCallback(() => {
+    clearIdleTimer();
+    if (!tutorialVideoSrc || overlayVisible) return;
+    idleTimerRef.current = window.setTimeout(() => {
+      idleTimerRef.current = null;
+      openVideo(tutorialVideoSrc);
+    }, IDLE_TUTORIAL_TIMEOUT);
+  }, [clearIdleTimer, tutorialVideoSrc, overlayVisible, openVideo]);
+
+  useEffect(() => {
+    scheduleIdlePlayback();
+    const handleActivity = () => {
+      scheduleIdlePlayback();
+    };
+    const events = ['pointerdown', 'pointermove', 'keydown', 'touchstart'];
+    const listenerOptions = { passive: true };
+    events.forEach((event) => window.addEventListener(event, handleActivity, listenerOptions));
+    return () => {
+      events.forEach((event) => window.removeEventListener(event, handleActivity, listenerOptions));
+      clearIdleTimer();
+    };
+  }, [scheduleIdlePlayback, clearIdleTimer]);
 
   const closeOverlay = () => {
     if (overlayVideoRef.current) {
