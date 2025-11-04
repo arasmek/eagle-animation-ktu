@@ -293,8 +293,8 @@ const Export = ({ t }) => {
                   <h2 className={style.heroTitle}>{t ? t('Ready to share your animation?') : 'Ready to share your animation?'}</h2>
                   <p className={style.subtitle}>
                     {t
-                      ? t('Pick a song (or leave it without sound) and your animation will saved.')
-                      : 'Pick a song (or leave it without sound) and your animation will saved.'}
+                      ? t('Pick a track (or leave it without sound) and your animation will be saved.')
+                      : 'Pick a track (or leave it without sound) and your animation will be saved.'}
                   </p>
 
                   <div className={style.card}>

@@ -168,7 +168,7 @@ const WelcomeView = ({ t }) => {
           </div>
           <PageContent>
             <div className={style.contentWrapper}>
-              <h2 className={style.heroTitle}>{t ? t('Enter your name to begin') : 'Enter your name to begin'}</h2>
+              <h2 className={style.heroTitle}>{t ? t('Stop motion workshop') : 'Stop motion workshop'}</h2>
               <input
                 ref={nameInputRef}
                 type="text"

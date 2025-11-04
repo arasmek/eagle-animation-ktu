@@ -180,7 +180,6 @@ const ExportOverlay = ({
             <span className={style.loader} />
             <h2 className={style.title}>{t('Your movie is being created!')}</h2>
             <p className={style.subtitle}>{t('Hang tight while we prepare everything for you.')}</p>
-            <div className={style.progress}>{`${Math.min(100, Math.max(0, Math.round(progress * 100)))}%`}</div>
             <p className={style.helper}>{t('Export will take a while, please be patient')}</p>
           </>
         ) : (
