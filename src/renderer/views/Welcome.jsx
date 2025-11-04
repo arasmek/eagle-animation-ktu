@@ -38,14 +38,25 @@ const WelcomeView = ({ t }) => {
     (async () => {
       try {
         const ad = await window.EA('GET_RESOURCE_FILE_URL', { rel: 'videos/ad.mp4' });
-        const tutorial = await window.EA('GET_RESOURCE_FILE_URL', { rel: 'videos/tutorial.mp4' });
         setAdVideoSrc(ad || null);
-        setTutorialVideoSrc(tutorial || null);
       } catch (e) {
         console.error('Video load failed', e);
       }
     })();
   }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const tutorialRel = i18n.language === 'lt' ? 'videos/TutorialLT.mp4' : 'videos/TutorialEN.mp4';
+        const tutorial = await window.EA('GET_RESOURCE_FILE_URL', { rel: tutorialRel });
+        setTutorialVideoSrc(tutorial || null);
+      } catch (e) {
+        console.error('Tutorial video load failed', e);
+        setTutorialVideoSrc(null);
+      }
+    })();
+  }, [i18n.language]);
 
   const openVideo = (src) => {
     if (!src) return;
