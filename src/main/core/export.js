@@ -34,7 +34,7 @@ export const exportProjectScene = async (projectPath, scene, frames, filePath, f
   if (opts.add_ending_text && opts.ending_text) {
     const width = frames[0]?.width || 1920;
     const height = frames[0]?.height || 1080;
-    const endingFrameCount = Math.round(fps * 1); // 1 second
+    const endingFrameCount = Math.round(fps * 3); // 1 second
     const endingBuffer = await createEndingFrame({
       text: opts.ending_text,
       width,
