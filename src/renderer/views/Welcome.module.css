@@ -4,6 +4,69 @@
   flex-direction: column;
   min-height: 100vh;
   align-items: center;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.layout::before,
+.layout::after {
+  content: '';
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  width: clamp(220px, 24vw, 420px);
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(99, 183, 255, 0.9), rgba(168, 126, 255, 0.85), rgba(255, 140, 212, 0.9));
+  background-size: 220% 220%;
+  filter: blur(68px);
+  opacity: 0.75;
+  transform-origin: center;
+  animation:
+    gradientFlow 16s ease-in-out infinite,
+    gradientWave 18s ease-in-out infinite;
+  z-index: -1;
+}
+
+.layout::before {
+  left: -12%;
+}
+
+.layout::after {
+  right: -12%;
+  animation:
+    gradientFlow 20s ease-in-out infinite reverse,
+    gradientWave 22s ease-in-out infinite reverse;
+}
+
+@keyframes gradientFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes gradientWave {
+  0% {
+    transform: translate3d(0, -4%, 0) rotate(-2deg) scale(1.05);
+    opacity: 0.65;
+  }
+
+  50% {
+    transform: translate3d(0, 6%, 0) rotate(3deg) scale(1.12);
+    opacity: 0.85;
+  }
+
+  100% {
+    transform: translate3d(0, -2%, 0) rotate(-3deg) scale(1.04);
+    opacity: 0.7;
+  }
 }
 
 .languageCorner {
