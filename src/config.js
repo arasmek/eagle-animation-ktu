@@ -16,7 +16,7 @@ export const PROJECT_FILE_EXTENSION = 'eagleanimation';
 export const PROJECT_FILE = `${PROJECT_FILE_NAME}.${PROJECT_FILE_EXTENSION}`;
 
 // Default values
-export const DEFAULT_FPS = 12;
+export const DEFAULT_FPS = 10;
 
 // Github link
 export const CONTRIBUTE_REPOSITORY = 'brick-a-brack/eagle-animation';

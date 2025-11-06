@@ -44,6 +44,9 @@ const HeaderBar = ({ onAction = null, leftActions = [], rightActions = [], child
   const [settingsHoldActive, setSettingsHoldActive] = useState(false);
   const settingsHoldTimerRef = useRef(null);
   const settingsHoldTriggeredRef = useRef(false);
+  const [projectSettingsHoldActive, setProjectSettingsHoldActive] = useState(false);
+  const projectSettingsHoldTimerRef = useRef(null);
+  const projectSettingsHoldTriggeredRef = useRef(false);
 
   const triggerAction = useCallback(
     (action) => {
@@ -168,6 +171,62 @@ const HeaderBar = ({ onAction = null, leftActions = [], rightActions = [], child
     cancelSettingsHold();
   };
 
+  const cancelProjectSettingsHold = useCallback(() => {
+    if (projectSettingsHoldTimerRef.current) {
+      clearTimeout(projectSettingsHoldTimerRef.current);
+      projectSettingsHoldTimerRef.current = null;
+    }
+    if (!projectSettingsHoldTriggeredRef.current) {
+      setProjectSettingsHoldActive(false);
+    }
+    projectSettingsHoldTriggeredRef.current = false;
+  }, []);
+
+  const startProjectSettingsHold = useCallback(() => {
+    if (projectSettingsHoldTimerRef.current) {
+      clearTimeout(projectSettingsHoldTimerRef.current);
+    }
+    projectSettingsHoldTriggeredRef.current = false;
+    setProjectSettingsHoldActive(true);
+    projectSettingsHoldTimerRef.current = window.setTimeout(() => {
+      projectSettingsHoldTimerRef.current = null;
+      projectSettingsHoldTriggeredRef.current = true;
+      setProjectSettingsHoldActive(false);
+      triggerAction('PROJECT_SETTINGS');
+    }, LONG_PRESS_MS);
+  }, [triggerAction]);
+
+  useEffect(() => cancelProjectSettingsHold, [cancelProjectSettingsHold]);
+
+  const handleProjectSettingsPointerDown = (event) => {
+    event.preventDefault();
+    startProjectSettingsHold();
+  };
+
+  const handleProjectSettingsPointerCancel = (event) => {
+    event.preventDefault();
+    cancelProjectSettingsHold();
+  };
+
+  const handleProjectSettingsKeyDown = (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+    if (event.repeat) {
+      return;
+    }
+    event.preventDefault();
+    startProjectSettingsHold();
+  };
+
+  const handleProjectSettingsKeyUp = (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+    event.preventDefault();
+    cancelProjectSettingsHold();
+  };
+
   return (
     <div className={`${style.headerBar} ${withBorder && style.withBorder}`}>
       <div className={`${style.side} ${style.left}`}>
@@ -223,6 +282,27 @@ const HeaderBar = ({ onAction = null, leftActions = [], rightActions = [], child
                 onPointerOut={handleSettingsPointerCancel}
                 onKeyDown={handleSettingsKeyDown}
                 onKeyUp={handleSettingsKeyUp}
+                onContextMenu={(event) => event.preventDefault()}
+              >
+                <ActionButton type={type} onClick={() => {}} tooltipPosition="NONE" />
+              </div>
+            );
+          }
+          if (type === 'PROJECT_SETTINGS') {
+            return (
+              <div
+                key="PROJECT_SETTINGS"
+                className={`${style.holdableButton} ${projectSettingsHoldActive ? style.holdableButtonActive : ''}`}
+                role="button"
+                tabIndex={0}
+                aria-label="Hold to open project settings"
+                onPointerDown={handleProjectSettingsPointerDown}
+                onPointerUp={handleProjectSettingsPointerCancel}
+                onPointerLeave={handleProjectSettingsPointerCancel}
+                onPointerCancel={handleProjectSettingsPointerCancel}
+                onPointerOut={handleProjectSettingsPointerCancel}
+                onKeyDown={handleProjectSettingsKeyDown}
+                onKeyUp={handleProjectSettingsKeyUp}
                 onContextMenu={(event) => event.preventDefault()}
               >
                 <ActionButton type={type} onClick={() => {}} tooltipPosition="NONE" />
