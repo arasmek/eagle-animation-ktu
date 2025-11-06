@@ -505,9 +505,8 @@ const Animator = ({ t }) => {
               ...(pictures?.length > 0 && (appCapabilities.includes('EXPORT_VIDEO') || appCapabilities.includes('EXPORT_FRAMES') || appCapabilities.includes('BACKGROUND_SYNC'))
                 ? ['EXPORT', 'CUSTOM_EXPORT']
                 : []),
-              'PROJECT_SETTINGS',
-              'SETTINGS',
             ]}
+            secretActions={['PROJECT_SETTINGS', 'SETTINGS']}
             onAction={handleAction}
           >
             <ActivityTimer startedAt={startedAt} durationInMinutes={settings?.LIMIT_ACTIVITY_DURATION} t={t} />

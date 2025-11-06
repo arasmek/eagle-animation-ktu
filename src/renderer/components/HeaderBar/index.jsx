@@ -37,7 +37,17 @@ const ActionButton = withTranslation()(({ type, tooltipPosition = 'LEFT', onClic
   return <Button title={titles?.[type] || null} onClick={onClick} icon={icons?.[type] || null} tooltipPosition={tooltipPosition} />;
 });
 
-const HeaderBar = ({ onAction = null, leftActions = [], rightActions = [], children = null, leftChildren = null, rightChildren = null, title = '', withBorder = false }) => {
+const HeaderBar = ({
+  onAction = null,
+  leftActions = [],
+  rightActions = [],
+  secretActions = [],
+  children = null,
+  leftChildren = null,
+  rightChildren = null,
+  title = '',
+  withBorder = false,
+}) => {
   const [customExportHoldActive, setCustomExportHoldActive] = useState(false);
   const customExportTimerRef = useRef(null);
   const customExportTriggeredRef = useRef(false);
@@ -113,7 +123,7 @@ const HeaderBar = ({ onAction = null, leftActions = [], rightActions = [], child
     cancelCustomExportHold();
   };
 
-  const filteredRightActions = rightActions.filter((action) => action !== 'CUSTOM_EXPORT');
+  const filteredRightActions = rightActions.filter((action) => action !== 'CUSTOM_EXPORT' && !secretActions.includes(action));
 
   const cancelSettingsHold = useCallback(() => {
     if (settingsHoldTimerRef.current) {
@@ -234,6 +244,51 @@ const HeaderBar = ({ onAction = null, leftActions = [], rightActions = [], child
           <ActionButton type={type} key={type} onClick={() => triggerAction(type)} tooltipPosition="NONE" />
         ))}
         {leftChildren}
+        {secretActions.map((type) => {
+          if (type === 'SETTINGS') {
+            return (
+              <div
+                key="SETTINGS"
+                className={`${style.holdableButton} ${style.secretButton} ${settingsHoldActive ? style.holdableButtonActive : ''}`}
+                role="button"
+                tabIndex={0}
+                aria-label="Hold to open settings"
+                onPointerDown={handleSettingsPointerDown}
+                onPointerUp={handleSettingsPointerCancel}
+                onPointerLeave={handleSettingsPointerCancel}
+                onPointerCancel={handleSettingsPointerCancel}
+                onPointerOut={handleSettingsPointerCancel}
+                onKeyDown={handleSettingsKeyDown}
+                onKeyUp={handleSettingsKeyUp}
+                onContextMenu={(event) => event.preventDefault()}
+              >
+                <ActionButton type={type} onClick={() => {}} tooltipPosition="NONE" />
+              </div>
+            );
+          }
+          if (type === 'PROJECT_SETTINGS') {
+            return (
+              <div
+                key="PROJECT_SETTINGS"
+                className={`${style.holdableButton} ${style.secretButton} ${projectSettingsHoldActive ? style.holdableButtonActive : ''}`}
+                role="button"
+                tabIndex={0}
+                aria-label="Hold to open project settings"
+                onPointerDown={handleProjectSettingsPointerDown}
+                onPointerUp={handleProjectSettingsPointerCancel}
+                onPointerLeave={handleProjectSettingsPointerCancel}
+                onPointerCancel={handleProjectSettingsPointerCancel}
+                onPointerOut={handleProjectSettingsPointerCancel}
+                onKeyDown={handleProjectSettingsKeyDown}
+                onKeyUp={handleProjectSettingsKeyUp}
+                onContextMenu={(event) => event.preventDefault()}
+              >
+                <ActionButton type={type} onClick={() => {}} tooltipPosition="NONE" />
+              </div>
+            );
+          }
+          return null;
+        })}
       </div>
       {(children || title) && (
         <div className={style.center}>
