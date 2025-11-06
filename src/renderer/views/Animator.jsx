@@ -8,7 +8,6 @@ import PageContent from '@components/PageContent';
 import PageLayout from '@components/PageLayout';
 import Player from '@components/Player';
 import ProjectSettingsWindow from '@components/ProjectSettingsWindow';
-import ProjectTitle from '@components/ProjectTitle';
 import Timeline from '@components/Timeline';
 import Window from '@components/Window';
 import { parseRatio } from '@core/ratio';
@@ -28,6 +27,7 @@ import soundError from '~/resources/sounds/error.mp3';
 import soundShutter from '~/resources/sounds/shutter.mp3';
 
 import * as style from './Animator.module.css';
+import * as limitWarningStyle from '@components/LimitWarning/style.module.css';
 
 // Play sound
 const playSound = (src, timeout = 2000) => {
@@ -85,6 +85,57 @@ const getFirstFrameId = (list) => {
     return frames[0].id;
   }
   return false;
+};
+
+const formatTime = (valueInSeconds = 0) => {
+  const safeValue = Math.max(0, Math.floor(valueInSeconds));
+  const hours = Math.floor(safeValue / 3600);
+  const minutes = Math.floor((safeValue % 3600) / 60);
+  const seconds = safeValue % 60;
+
+  if (hours > 0) {
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  }
+
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+};
+
+const ActivityTimer = ({ startedAt, durationInMinutes, t }) => {
+  const durationLimit = Number(durationInMinutes);
+  const shouldDisplay = durationLimit > 0;
+  const [currentTime, setCurrentTime] = useState(() => new Date().getTime() / 1000);
+
+  useEffect(() => {
+    if (!shouldDisplay) {
+      return undefined;
+    }
+
+    const interval = setInterval(() => {
+      setCurrentTime(new Date().getTime() / 1000);
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [shouldDisplay]);
+
+  if (!shouldDisplay) {
+    return null;
+  }
+
+  const totalSeconds = Math.floor(durationLimit * 60);
+  const hasStarted = Number(startedAt) > 0;
+  const elapsedSeconds = hasStarted ? Math.max(0, currentTime - Number(startedAt)) : 0;
+  const remainingSeconds = hasStarted ? totalSeconds - elapsedSeconds : totalSeconds;
+  const isOvertime = hasStarted && remainingSeconds <= 0;
+  const displaySeconds = isOvertime ? Math.abs(remainingSeconds) : remainingSeconds;
+
+  return (
+    <div className={`${limitWarningStyle.timer} ${isOvertime ? limitWarningStyle.timerExceeded : ''}`}>
+      <span className={limitWarningStyle.timerLabel}>{t(isOvertime ? 'Overtime' : 'Time left')}</span>
+      <span className={limitWarningStyle.timerValue}>{formatTime(displaySeconds)}</span>
+    </div>
+  );
 };
 
 const Animator = ({ t }) => {
@@ -454,11 +505,12 @@ const Animator = ({ t }) => {
               ...(pictures?.length > 0 && (appCapabilities.includes('EXPORT_VIDEO') || appCapabilities.includes('EXPORT_FRAMES') || appCapabilities.includes('BACKGROUND_SYNC'))
                 ? ['EXPORT', 'CUSTOM_EXPORT']
                 : []),
+              'PROJECT_SETTINGS',
               'SETTINGS',
             ]}
             onAction={handleAction}
           >
-            <ProjectTitle title={project?.title} onTitleChange={(title) => projectActions.rename(title || '')} onEdit={() => handleAction('PROJECT_SETTINGS')} />
+            <ActivityTimer startedAt={startedAt} durationInMinutes={settings?.LIMIT_ACTIVITY_DURATION} t={t} />
           </HeaderBar>
           <PageContent>
             <div className={style.workspace}>
