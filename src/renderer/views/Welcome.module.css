@@ -230,17 +230,27 @@
   margin: 16px 0;
   font-size: 0.9rem;
   color: rgba(200, 200, 200, 0.35);
+  opacity: 0.2;
 }
 
-.footerLink a {
+.footerLinkButton {
+  background: none;
+  border: none;
   color: inherit;
   text-decoration: underline;
   opacity: 0.75;
   transition: opacity 0.2s ease-in-out;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
 }
 
-.footerLink a:hover,
-.footerLink a:focus {
+.footerLinkButton:hover,
+.footerLinkButton:focus {
+  opacity: 1;
+}
+
+.footerLinkButtonActive {
   opacity: 1;
 }
 

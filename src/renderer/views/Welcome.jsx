@@ -8,7 +8,7 @@ import useSettings from '@hooks/useSettings';
 import Camera from '@icons/faCamera';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation, withTranslation } from 'react-i18next';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import * as style from './Welcome.module.css';
 
@@ -33,6 +33,9 @@ const WelcomeView = ({ t }) => {
   const adHoldTriggeredRef = useRef(false);
   const [adHoldActive, setAdHoldActive] = useState(false);
   const idleTimerRef = useRef(null);
+  const footerHoldTimerRef = useRef(null);
+  const footerHoldTriggeredRef = useRef(false);
+  const [footerHoldActive, setFooterHoldActive] = useState(false);
 
   useEffect(() => {
     nameInputRef.current?.focus();
@@ -201,6 +204,66 @@ const WelcomeView = ({ t }) => {
     cancelAdHold();
   };
 
+  const cancelFooterHold = useCallback(() => {
+    if (footerHoldTimerRef.current) {
+      clearTimeout(footerHoldTimerRef.current);
+      footerHoldTimerRef.current = null;
+    }
+    if (!footerHoldTriggeredRef.current) {
+      setFooterHoldActive(false);
+    }
+    footerHoldTriggeredRef.current = false;
+  }, []);
+
+  const startFooterHold = useCallback(() => {
+    if (footerHoldTimerRef.current) {
+      clearTimeout(footerHoldTimerRef.current);
+    }
+    footerHoldTriggeredRef.current = false;
+    setFooterHoldActive(true);
+    footerHoldTimerRef.current = window.setTimeout(() => {
+      footerHoldTimerRef.current = null;
+      footerHoldTriggeredRef.current = true;
+      setFooterHoldActive(false);
+      navigate('/home');
+    }, 1000);
+  }, [navigate]);
+
+  useEffect(() => cancelFooterHold, [cancelFooterHold]);
+
+  const handleFooterPointerDown = (event) => {
+    if (event) {
+      event.preventDefault();
+    }
+    startFooterHold();
+  };
+
+  const handleFooterPointerUp = (event) => {
+    if (event) {
+      event.preventDefault();
+    }
+    cancelFooterHold();
+  };
+
+  const handleFooterKeyDown = (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+    if (event.repeat) {
+      return;
+    }
+    event.preventDefault();
+    startFooterHold();
+  };
+
+  const handleFooterKeyUp = (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+    event.preventDefault();
+    cancelFooterHold();
+  };
+
   return (
     <>
       <PageLayout>
@@ -253,7 +316,19 @@ const WelcomeView = ({ t }) => {
             </div>
           </PageContent>
           <div className={style.footerLink}>
-            <Link to="/home">{t ? t('Old home') : 'Old home'}</Link>
+            <button
+              type="button"
+              className={`${style.footerLinkButton} ${footerHoldActive ? style.footerLinkButtonActive : ''}`}
+              onPointerDown={handleFooterPointerDown}
+              onPointerUp={handleFooterPointerUp}
+              onPointerLeave={handleFooterPointerUp}
+              onPointerCancel={handleFooterPointerUp}
+              onKeyDown={handleFooterKeyDown}
+              onKeyUp={handleFooterKeyUp}
+              onContextMenu={(event) => event.preventDefault()}
+            >
+              {t ? t('Old home') : 'Old home'}
+            </button>
           </div>
         </div>
       </PageLayout>
